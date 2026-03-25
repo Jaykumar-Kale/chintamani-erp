@@ -2,7 +2,7 @@ const User = require('../models/User');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
-// Register (run once to create Sagar's account)
+// Register (protected route: requires valid JWT)
 exports.register = async (req, res) => {
   try {
     const { name, email, password } = req.body;
