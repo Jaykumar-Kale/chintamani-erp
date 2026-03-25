@@ -14,7 +14,7 @@ export default function Analytics() {
     <div>
       <h1 className="text-2xl font-bold text-gray-800 mb-6">Analytics & Profit</h1>
 
-      <div className="grid grid-cols-3 gap-4 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 mb-8">
         <div className="bg-green-50 border border-green-200 rounded-xl p-5">
           <div className="text-3xl mb-2">💰</div>
           <div className="text-2xl font-bold text-gray-800">₹{(data.overall?.totalRevenue || 0).toLocaleString()}</div>
@@ -32,31 +32,33 @@ export default function Analytics() {
         </div>
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 md:p-6">
         <h2 className="font-bold text-gray-800 mb-4">Monthly Breakdown</h2>
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="text-left text-gray-500 border-b">
-              <th className="pb-2">Month</th>
-              <th className="pb-2">Bills</th>
-              <th className="pb-2">Revenue</th>
-              <th className="pb-2">Profit</th>
-            </tr>
-          </thead>
-          <tbody>
-            {data.monthly.map((m) => (
-              <tr key={`${m._id.year}-${m._id.month}`} className="border-b last:border-0">
-                <td className="py-3 font-medium">{MONTHS[m._id.month]} {m._id.year}</td>
-                <td className="py-3">{m.totalBills}</td>
-                <td className="py-3 text-green-600 font-semibold">₹{m.totalRevenue.toLocaleString()}</td>
-                <td className="py-3 text-purple-600 font-semibold">₹{m.totalProfit.toLocaleString()}</td>
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[560px] text-sm">
+            <thead>
+              <tr className="text-left text-gray-500 border-b">
+                <th className="pb-2">Month</th>
+                <th className="pb-2">Bills</th>
+                <th className="pb-2">Revenue</th>
+                <th className="pb-2">Profit</th>
               </tr>
-            ))}
-            {data.monthly.length === 0 && (
-              <tr><td colSpan="4" className="text-center py-6 text-gray-400">No data yet</td></tr>
-            )}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {data.monthly.map((m) => (
+                <tr key={`${m._id.year}-${m._id.month}`} className="border-b last:border-0">
+                  <td className="py-3 font-medium">{MONTHS[m._id.month]} {m._id.year}</td>
+                  <td className="py-3">{m.totalBills}</td>
+                  <td className="py-3 text-green-600 font-semibold">₹{m.totalRevenue.toLocaleString()}</td>
+                  <td className="py-3 text-purple-600 font-semibold">₹{m.totalProfit.toLocaleString()}</td>
+                </tr>
+              ))}
+              {data.monthly.length === 0 && (
+                <tr><td colSpan="4" className="text-center py-6 text-gray-400">No data yet</td></tr>
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );

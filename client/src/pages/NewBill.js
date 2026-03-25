@@ -443,15 +443,15 @@ export default function NewBill() {
   return (
     <div className="max-w-7xl mx-auto">
       {/* PAGE HEADER */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-800">New Bill / Cash Memo</h1>
           <p className="text-gray-400 text-sm mt-0.5">Fill in details to generate a cash memo</p>
         </div>
-        <div className="flex gap-3 items-center">
+        <div className="flex gap-2 items-center flex-wrap w-full lg:w-auto">
           {/* Language Toggle */}
           {!savedBill && (
-            <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-1">
+            <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-1 w-full sm:w-auto justify-center">
               <button onClick={() => setLang('mr')}
                 className={`px-3 py-1.5 rounded-md text-xs font-bold transition ${lang === 'mr' ? 'bg-primary text-white shadow' : 'text-gray-500 hover:text-gray-700'}`}>
                 मराठी
@@ -466,40 +466,40 @@ export default function NewBill() {
           {savedBill ? (
             <>
               <button onClick={handleWhatsApp} disabled={pdfLoading}
-                className="flex items-center gap-2 bg-green-500 text-white px-4 py-2.5 rounded-lg text-sm font-semibold hover:bg-green-600 transition disabled:opacity-60">
+                className="flex items-center justify-center gap-2 bg-green-500 text-white px-4 py-2.5 rounded-lg text-sm font-semibold hover:bg-green-600 transition disabled:opacity-60 w-full sm:w-auto">
                 {pdfLoading ? '⏳...' : '📱 WhatsApp + PDF'}
               </button>
               <button onClick={handleDownloadPDF} disabled={pdfLoading}
-                className="flex items-center gap-2 bg-accent text-white px-4 py-2.5 rounded-lg text-sm font-semibold hover:opacity-90 transition disabled:opacity-60">
+                className="flex items-center justify-center gap-2 bg-accent text-white px-4 py-2.5 rounded-lg text-sm font-semibold hover:opacity-90 transition disabled:opacity-60 w-full sm:w-auto">
                 {pdfLoading ? '⏳...' : '⬇️ Download PDF'}
               </button>
               <button onClick={handlePrint}
-                className="flex items-center gap-2 bg-gray-700 text-white px-4 py-2.5 rounded-lg text-sm font-semibold hover:bg-gray-800 transition">
+                className="flex items-center justify-center gap-2 bg-gray-700 text-white px-4 py-2.5 rounded-lg text-sm font-semibold hover:bg-gray-800 transition w-full sm:w-auto">
                 🖨️ Print
               </button>
               <button onClick={handleNewBill}
-                className="flex items-center gap-2 bg-primary text-white px-4 py-2.5 rounded-lg text-sm font-semibold hover:bg-blue-800 transition">
+                className="flex items-center justify-center gap-2 bg-primary text-white px-4 py-2.5 rounded-lg text-sm font-semibold hover:bg-blue-800 transition w-full sm:w-auto">
                 ➕ New Bill
               </button>
             </>
           ) : (
             <button onClick={handleSave} disabled={loading}
-              className="flex items-center gap-2 bg-primary text-white px-6 py-2.5 rounded-lg text-sm font-semibold hover:bg-blue-800 transition disabled:opacity-50">
+              className="flex items-center justify-center gap-2 bg-primary text-white px-6 py-2.5 rounded-lg text-sm font-semibold hover:bg-blue-800 transition disabled:opacity-50 w-full sm:w-auto">
               {loading ? '⏳ Saving...' : '💾 Save & Generate Bill'}
             </button>
           )}
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
         {/* ══════════ LEFT — FORM ══════════ */}
         <div className="space-y-4">
 
           {/* Language banner */}
           {!savedBill && (
-            <div className={`rounded-lg px-4 py-2.5 text-sm font-medium flex items-center gap-2 ${lang === 'mr' ? 'bg-orange-50 text-orange-700 border border-orange-200' : 'bg-blue-50 text-blue-700 border border-blue-200'}`}>
+            <div className={`rounded-lg px-4 py-2.5 text-sm font-medium flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2 ${lang === 'mr' ? 'bg-orange-50 text-orange-700 border border-orange-200' : 'bg-blue-50 text-blue-700 border border-blue-200'}`}>
               {lang === 'mr' ? '🟠 मराठी भाषेत बिल तयार होईल' : '🔵 Bill will be generated in English'}
-              <span className="ml-auto text-xs opacity-60">{lang === 'mr' ? '(For rural/village customers)' : '(For educated/IT park customers)'}</span>
+              <span className="sm:ml-auto text-xs opacity-60">{lang === 'mr' ? '(For rural/village customers)' : '(For educated/IT park customers)'}</span>
             </div>
           )}
 
@@ -551,7 +551,7 @@ export default function NewBill() {
                       <input type="text" value={item.description} onChange={e => updateItem(idx, 'description', e.target.value)}
                         disabled={!!savedBill} placeholder="Description"
                         className="w-full border border-blue-200 rounded px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-primary bg-white" />
-                      <div className="grid grid-cols-2 gap-2">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                         <div>
                           <label className="text-xs text-gray-400 mb-0.5 block">Qty {item.unit ? `(${item.unit})` : ''}</label>
                           <input type="number" value={item.qty} onChange={e => updateItem(idx, 'qty', e.target.value)} disabled={!!savedBill}
@@ -580,7 +580,7 @@ export default function NewBill() {
                         className="flex-1 border border-orange-200 rounded px-2 py-1.5 text-xs focus:outline-none bg-white" />
                       {!savedBill && <button onClick={() => removeCustomItem(idx)} className="text-red-400 hover:text-red-600 text-lg">✕</button>}
                     </div>
-                    <div className="grid grid-cols-2 gap-2">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                       <div>
                         <label className="text-xs text-gray-400 mb-0.5 block">Qty</label>
                         <input type="number" value={item.qty} onChange={e => updateCustomItem(idx, 'qty', e.target.value)}
@@ -617,7 +617,7 @@ export default function NewBill() {
               onChange={e => setCostPrice(e.target.value)} disabled={!!savedBill}
               className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400 disabled:bg-gray-50" />
             {costPrice && (
-              <div className="mt-3 bg-purple-50 rounded-lg p-3 flex justify-between text-sm">
+              <div className="mt-3 bg-purple-50 rounded-lg p-3 flex flex-col sm:flex-row sm:justify-between gap-1 text-sm">
                 <span className="text-gray-600">Estimated Profit:</span>
                 <span className="font-bold text-purple-600">₹{(total - parseFloat(costPrice || 0)).toLocaleString('en-IN')}</span>
               </div>
@@ -652,7 +652,7 @@ export default function NewBill() {
 
         {/* ══════════ RIGHT — LIVE PREVIEW ══════════ */}
         <div>
-          <div className="sticky top-6">
+          <div className="xl:sticky xl:top-6">
             <div className="flex items-center justify-between mb-3">
               <p className="text-sm font-semibold text-gray-500 uppercase tracking-wide">📄 Live Preview</p>
               <div className="flex items-center gap-2">
@@ -668,7 +668,11 @@ export default function NewBill() {
             </div>
 
             {/* Render the memo */}
-            <CashMemo />
+            <div className="overflow-x-auto">
+              <div className="min-w-[520px]">
+                <CashMemo />
+              </div>
+            </div>
 
             {/* Action buttons */}
             {!savedBill ? (
@@ -677,7 +681,7 @@ export default function NewBill() {
                 {loading ? '⏳ Saving...' : '💾 Save & Generate Bill'}
               </button>
             ) : (
-              <div className="mt-4 grid grid-cols-3 gap-2">
+              <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-2">
                 <button onClick={handleWhatsApp} disabled={pdfLoading}
                   className="bg-green-500 text-white py-2.5 rounded-xl font-bold hover:bg-green-600 transition text-xs shadow disabled:opacity-60">
                   {pdfLoading ? '⏳' : '📱 WhatsApp\n+ PDF'}

@@ -22,9 +22,9 @@ export default function Customers() {
   return (
     <div>
       <h1 className="text-2xl font-bold text-gray-800 mb-6">Customers</h1>
-      <div className="grid grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
         {/* Customer List */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 md:p-6">
           <input
             type="text"
             placeholder="🔍 Search customers..."
@@ -55,7 +55,7 @@ export default function Customers() {
         </div>
 
         {/* Bill History */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 md:p-6">
           {selected ? (
             <>
               <h2 className="font-bold text-gray-800 mb-1">{selected.name}</h2>
@@ -82,7 +82,7 @@ export default function Customers() {
               </div>
             </>
           ) : (
-            <div className="flex items-center justify-center h-full text-gray-300 text-sm">
+            <div className="flex items-center justify-center min-h-[180px] xl:min-h-full text-gray-300 text-sm">
               👈 Select a customer to view history
             </div>
           )}
