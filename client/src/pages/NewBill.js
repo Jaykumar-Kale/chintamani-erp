@@ -5,7 +5,6 @@ import signImg from '../assets/sign.jpg';
 import motorLeft from '../assets/motor-left.jpg';
 import motorRight from '../assets/motor-right.jpg';
 
-// ─── Default items ───
 const DEFAULT_ITEMS = [
   { label: 'Laxmi Pump',       description: 'Laxmi ___ HP ___ Stage Pump', qty: 1,  rate: '', amount: 0, checked: false },
   { label: 'Pipe ISI Brand',   description: 'Pipe ISI Brand ___ Fut',       qty: 1,  rate: '', amount: 0, checked: false },
@@ -17,7 +16,6 @@ const DEFAULT_ITEMS = [
   { label: 'Fitting Charges',  description: 'Fitting Charges',              qty: 1,  rate: '', amount: 0, checked: false },
 ];
 
-// ─── Language content ───
 const LANG = {
   mr: {
     cashMemo:    'कॅश मेमो',
@@ -63,120 +61,86 @@ const LANG = {
   },
 };
 
+// ── Shared memo styles ──
+const S = {
+  border:     '2px solid #1a1a1a',
+  borderLight:'1px solid #bbbbbb',
+  borderMid:  '1px solid #888888',
+  red:        '#c0392b',
+  bg:         '#ffffff',
+  rowH:       '28px',
+};
+
 export default function NewBill() {
-  const memoRef = useRef();
-  const [lang, setLang] = useState('mr');
-  const [customer, setCustomer] = useState({ name: '', mobile: '', address: '' });
-  const [items, setItems] = useState(DEFAULT_ITEMS.map(i => ({ ...i })));
+  const [lang, setLang]           = useState('mr');
+  const [customer, setCustomer]   = useState({ name: '', mobile: '', address: '' });
+  const [items, setItems]         = useState(DEFAULT_ITEMS.map(i => ({ ...i })));
   const [customItems, setCustomItems] = useState([]);
   const [costPrice, setCostPrice] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [pdfLoading, setPdfLoading] = useState(false);
+  const [loading, setLoading]     = useState(false);
   const [savedBill, setSavedBill] = useState(null);
+  // eslint-disable-next-line no-unused-vars
+  const memoRef = useRef();
 
-  const L = LANG[lang];
-  const today = new Date();
+  const L       = LANG[lang];
+  const today   = new Date();
   const dateStr = today.toLocaleDateString('en-IN', { day: '2-digit', month: '2-digit', year: 'numeric' });
 
-  // ── Item handlers ──
   const toggleItem = (idx) =>
-    setItems(prev => prev.map((item, i) => i === idx ? { ...item, checked: !item.checked } : item));
+    setItems(prev => prev.map((it, i) => i === idx ? { ...it, checked: !it.checked } : it));
 
-  const updateItem = (idx, field, value) => {
-    setItems(prev => prev.map((item, i) => {
-      if (i !== idx) return item;
-      const updated = { ...item, [field]: value };
+  const updateItem = (idx, field, value) =>
+    setItems(prev => prev.map((it, i) => {
+      if (i !== idx) return it;
+      const u = { ...it, [field]: value };
       if (field === 'qty' || field === 'rate') {
-        const q = parseFloat(field === 'qty' ? value : item.qty) || 0;
-        const r = parseFloat(field === 'rate' ? value : item.rate) || 0;
-        updated.amount = q * r;
+        u.amount = (parseFloat(field === 'qty' ? value : it.qty) || 0)
+                 * (parseFloat(field === 'rate' ? value : it.rate) || 0);
       }
-      return updated;
+      return u;
     }));
-  };
 
   const addCustomItem = () =>
-    setCustomItems(prev => [...prev, { description: '', qty: 1, rate: '', amount: 0 }]);
+    setCustomItems(p => [...p, { description: '', qty: 1, rate: '', amount: 0 }]);
 
-  const updateCustomItem = (idx, field, value) => {
-    setCustomItems(prev => prev.map((item, i) => {
-      if (i !== idx) return item;
-      const updated = { ...item, [field]: value };
+  const updateCustomItem = (idx, field, value) =>
+    setCustomItems(prev => prev.map((it, i) => {
+      if (i !== idx) return it;
+      const u = { ...it, [field]: value };
       if (field === 'qty' || field === 'rate') {
-        const q = parseFloat(field === 'qty' ? value : item.qty) || 0;
-        const r = parseFloat(field === 'rate' ? value : item.rate) || 0;
-        updated.amount = q * r;
+        u.amount = (parseFloat(field === 'qty' ? value : it.qty) || 0)
+                 * (parseFloat(field === 'rate' ? value : it.rate) || 0);
       }
-      return updated;
+      return u;
     }));
-  };
 
   const removeCustomItem = (idx) =>
-    setCustomItems(prev => prev.filter((_, i) => i !== idx));
+    setCustomItems(p => p.filter((_, i) => i !== idx));
 
   const allBillItems = [...items.filter(i => i.checked), ...customItems];
-  const total = allBillItems.reduce((sum, i) => sum + (parseFloat(i.amount) || 0), 0);
+  const total = allBillItems.reduce((s, i) => s + (parseFloat(i.amount) || 0), 0);
 
-  // ── Generate PDF using html2canvas + jsPDF ──
-  const generatePDF = async (billData) => {
-    try {
-      const { default: html2canvas } = await import('html2canvas');
-      const { default: jsPDF } = await import('jspdf');
+  const displayTotal = savedBill ? savedBill.total : total;
+  const displayBillNo = savedBill ? savedBill.billNo : null;
+  const displayCustomer = savedBill ? savedBill.customer : customer;
 
-      const element = memoRef.current;
-      if (!element) throw new Error('Memo ref not found');
-
-      const canvas = await html2canvas(element, {
-        scale: 2,
-        useCORS: true,
-        allowTaint: true,
-        backgroundColor: '#ffffff',
-        logging: false,
-      });
-
-      const imgData = canvas.toDataURL('image/jpeg', 0.95);
-      const pdf = new jsPDF({
-        orientation: 'portrait',
-        unit: 'mm',
-        format: 'a5', // A5 = exactly like cash memo size
-      });
-
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = pdf.internal.pageSize.getHeight();
-
-      // Fit entire memo in one page
-      pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight);
-
-      // Filename = customer name
-      const customerName = billData?.customer?.name || customer.name || 'bill';
-      const billNo = billData?.billNo || '';
-      const filename = `${customerName.replace(/\s+/g, '_')}_Bill_${billNo}.pdf`;
-
-      return { pdf, filename };
-    } catch (err) {
-      console.error('PDF generation error:', err);
-      throw err;
-    }
-  };
-
-  // ── Save Bill ──
+  // ── Save to DB ──
   const handleSave = async () => {
-    if (!customer.name || !customer.mobile) { toast.error('Please enter customer name and mobile!'); return; }
-    if (allBillItems.length === 0) { toast.error('Please select at least one item!'); return; }
-
+    if (!customer.name || !customer.mobile) { toast.error('Customer name & mobile required!'); return; }
+    if (allBillItems.length === 0)           { toast.error('Select at least one item!'); return; }
     setLoading(true);
     try {
       const res = await api.post('/bills', {
         customer,
         items: allBillItems.map(i => ({
           description: i.description,
-          qty: parseFloat(i.qty) || 1,
-          rate: parseFloat(i.rate) || 0,
+          qty:    parseFloat(i.qty)    || 1,
+          rate:   parseFloat(i.rate)   || 0,
           amount: parseFloat(i.amount) || 0,
         })),
-        notes: `${L.warranty}. ${L.replacement}.`,
+        notes:     `${L.warranty}. ${L.replacement}.`,
         costPrice: parseFloat(costPrice) || 0,
-        language: lang,
+        language:  lang,
       });
       setSavedBill(res.data.bill);
       toast.success(`Bill #${res.data.bill.billNo} created! 🎉`);
@@ -186,44 +150,23 @@ export default function NewBill() {
     setLoading(false);
   };
 
-  // ── Print (browser print dialog) ──
+  // ── Print → browser "Save as PDF" gives pixel-perfect output ──
   const handlePrint = () => window.print();
 
-  // ── Download PDF ──
-  const handleDownloadPDF = async () => {
-    setPdfLoading(true);
-    try {
-      const { pdf, filename } = await generatePDF(savedBill);
-      pdf.save(filename);
-      toast.success(`PDF saved as "${filename}" ✅`);
-    } catch {
-      toast.error('PDF generation failed. Try Print instead.');
-    }
-    setPdfLoading(false);
-  };
-
-  // ── WhatsApp: Download PDF first → then open WhatsApp ──
-  const handleWhatsApp = async () => {
+  // ── WhatsApp with personalized bilingual message ──
+  const handleWhatsApp = () => {
     if (!savedBill) return;
-    setPdfLoading(true);
-    try {
-      // Step 1: Generate & download PDF automatically
-      const { pdf, filename } = await generatePDF(savedBill);
-      pdf.save(filename);
+    const name   = savedBill.customer.name;
+    const billNo = savedBill.billNo;
+    const amt    = savedBill.total.toLocaleString('en-IN');
+    const mobile = savedBill.customer.mobile;
 
-      // Step 2: Short delay then open WhatsApp
-      await new Promise(r => setTimeout(r, 800));
+    const msg = lang === 'mr'
+      ? `🙏 नमस्कार ${name} जी,\n\nश्री चिंतामणी इलेक्ट्रिकल्स\nBill No: #${billNo}\nदिनांक: ${dateStr}\nएकूण: रु. ${amt}\n\n✅ १८ महिने वॉरंटी & रु.८०० बदली शुल्क\n\n💳 UPI : 9527370207 (Sagar Kale)\n\nधन्यवाद 🙏\nSagar Kale: 9527370207`
+      : `🙏 Dear ${name},\n\nShree Chintamani Electricals\nBill No: #${billNo}\nDate: ${dateStr}\nTotal: Rs. ${amt}\n\n✅ 18 Months Warranty & Rs.800 Replacement Charges\n\n💳 UPI : 9527370207 (Sagar Kale)\n\nThank you 🙏\nSagar Kale: 9527370207`;
 
-      const msg = lang === 'mr'
-        ? `🙏 नमस्कार ${savedBill.customer.name} जी,\n\nश्री चिंतामणी इलेक्ट्रिकल्स\nBill No: #${savedBill.billNo}\nदिनांक: ${dateStr}\nएकूण: रु. ${savedBill.total.toLocaleString()}\n\n✅ १८ महिने वॉरंटी\n💰 रु.८०० बदली शुल्क\n\n(Bill PDF attached separately)\n\nधन्यवाद 🙏\nSagar Kale: 9527370207`
-        : `Dear ${savedBill.customer.name},\n\nChintamani Electricals & Motor Winding\nBill No: #${savedBill.billNo}\nDate: ${dateStr}\nTotal: Rs. ${savedBill.total.toLocaleString()}\n\n✅ 18 Months Warranty\n💰 Rs.800 Replacement Charges\n\n(Bill PDF attached separately)\n\nThank you!\nSagar Kale: 9527370207`;
-
-      window.open(`https://wa.me/91${savedBill.customer.mobile}?text=${encodeURIComponent(msg)}`);
-      toast.success('PDF downloaded! Now attach it in WhatsApp 📎');
-    } catch {
-      toast.error('Failed. Try Download PDF button instead.');
-    }
-    setPdfLoading(false);
+    // Opens WhatsApp from Sagar's number (9527370207) to customer
+    window.open(`https://wa.me/91${mobile}?text=${encodeURIComponent(msg)}`);
   };
 
   const handleNewBill = () => {
@@ -234,300 +177,253 @@ export default function NewBill() {
     setCostPrice('');
   };
 
-  // ─────────────────────────────────────────────────────────
-  // ── THE CASH MEMO COMPONENT (used for preview + PDF) ──
-  // ─────────────────────────────────────────────────────────
+  // ────────────────────────────────────────────────────────────
+  //  CASH MEMO COMPONENT  — identical for screen + print
+  // ────────────────────────────────────────────────────────────
+  const fontFamily = lang === 'mr'
+    ? "'Noto Sans Devanagari','Mangal',sans-serif"
+    : "'Inter','Segoe UI',sans-serif";
+
   const CashMemo = () => (
     <div
-      ref={memoRef}
       id="cash-memo"
       style={{
-        fontFamily: lang === 'mr'
-          ? "'Noto Sans Devanagari', 'Mangal', sans-serif"
-          : "'Georgia', serif",
-        fontSize: '11px',
-        background: 'white',
-        border: '2.5px solid #111',
+        fontFamily,
+        fontSize: '11.5px',
+        background: S.bg,
+        border: S.border,
         width: '100%',
         boxSizing: 'border-box',
+        color: '#111',
       }}
     >
       {/* ── HEADER ── */}
-      <div style={{ borderBottom: '2px solid #111', padding: '7px 10px 5px' }}>
-        {/* Top row: Cash Memo | tagline | phone */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '5px' }}>
-          <span style={{ border: '1px solid #333', padding: '1px 5px', fontSize: '9.5px', fontWeight: 'bold', whiteSpace: 'nowrap' }}>
+      <div style={{ borderBottom: S.border, padding: '8px 12px 7px' }}>
+        {/* Row 1: label | tagline | phone */}
+        <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:'6px' }}>
+          <span style={{ border:'1.5px solid #333', padding:'2px 7px', fontSize:'10px', fontWeight:'700', whiteSpace:'nowrap', alignSelf:'center' }}>
             {L.cashMemo}
           </span>
-          <span style={{ fontWeight: '700', fontSize: '11px', textAlign: 'center', flex: 1, margin: '0 8px' }}>
+          <span style={{ fontWeight:'700', fontSize:'12px', textAlign:'center', flex:1, margin:'0 10px', alignSelf:'center' }}>
             {L.tagline}
           </span>
-          <div style={{ textAlign: 'right', fontSize: '9.5px', lineHeight: '1.5', whiteSpace: 'nowrap' }}>
+          <div style={{ textAlign:'right', fontSize:'10px', lineHeight:'1.6', whiteSpace:'nowrap' }}>
             <div>Mob : 9527370207</div>
             <div>9970780137</div>
           </div>
         </div>
 
-        {/* Company row: left-image | company info | right-image */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '6px' }}>
-          {/* Left: submersible pumps group */}
-          <img
-            src={motorRight}
-            alt="submersible pumps"
-            style={{ height: '58px', width: '58px', objectFit: 'contain', flexShrink: 0 }}
-          />
-
-          {/* Center: company name + address */}
-          <div style={{ flex: 1, textAlign: 'center' }}>
-            <div style={{
-              color: '#c0392b',
-              fontWeight: '900',
-              fontSize: '14.5px',
-              lineHeight: '1.3',
-              fontFamily: 'Georgia, serif',
-            }}>
+        {/* Row 2: left-image | company info | right-image */}
+        <div style={{ display:'flex', alignItems:'center', gap:'8px' }}>
+          <img src={motorRight} alt="pumps"
+            style={{ height:'64px', width:'64px', objectFit:'contain', flexShrink:0 }} />
+          <div style={{ flex:1, textAlign:'center' }}>
+            <div style={{ color:S.red, fontWeight:'900', fontSize:'16px', lineHeight:'1.25', letterSpacing:'-0.2px' }}>
               {L.company}
             </div>
-            <div style={{ fontSize: '9px', color: '#444', marginTop: '2px' }}>{L.subtext}</div>
-            <div style={{ fontSize: '9px', color: '#444' }}>{L.address}</div>
-            <div style={{ fontSize: '9.5px', fontWeight: 'bold', color: '#222', marginTop: '1px' }}>{L.propr}</div>
+            <div style={{ fontSize:'9.5px', color:'#555', marginTop:'3px' }}>{L.subtext}</div>
+            <div style={{ fontSize:'9.5px', color:'#555' }}>{L.address}</div>
+            <div style={{ fontSize:'10px', fontWeight:'700', color:'#222', marginTop:'2px' }}>{L.propr}</div>
           </div>
-
-          {/* Right: single motor */}
-          <img
-            src={motorLeft}
-            alt="motor"
-            style={{ height: '58px', width: '58px', objectFit: 'contain', flexShrink: 0 }}
-          />
+          <img src={motorLeft} alt="motor"
+            style={{ height:'64px', width:'64px', objectFit:'contain', flexShrink:0 }} />
         </div>
       </div>
 
-      {/* ── CUSTOMER + BILL INFO ── */}
-      <div style={{
-        borderBottom: '1px solid #666',
-        padding: '6px 10px',
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'flex-start',
-        gap: '10px',
-      }}>
-        {/* Customer details */}
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ display: 'flex', alignItems: 'baseline', gap: '3px' }}>
-            <span style={{ fontWeight: 'bold', fontSize: '12px', flexShrink: 0 }}>{L.shri}</span>
-            <span style={{ fontWeight: '600', borderBottom: '1px solid #666', flex: 1, paddingBottom: '1px', fontSize: '11px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-              {savedBill ? savedBill.customer.name : customer.name}
+      {/* ── CUSTOMER + BILL NO ── */}
+      <div style={{ borderBottom: S.borderMid, padding:'8px 12px', display:'flex', justifyContent:'space-between', alignItems:'flex-start', gap:'12px' }}>
+        <div style={{ flex:1, minWidth:0 }}>
+          <div style={{ display:'flex', alignItems:'baseline', gap:'4px' }}>
+            <span style={{ fontWeight:'700', fontSize:'12.5px', flexShrink:0 }}>{L.shri}</span>
+            <span style={{
+              fontWeight:'600', borderBottom:'1.5px solid #555',
+              flex:1, paddingBottom:'2px', fontSize:'12px',
+              overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap',
+            }}>
+              {displayCustomer.name || ''}
             </span>
           </div>
-          {(savedBill ? savedBill.customer.address : customer.address) && (
-            <div style={{ fontSize: '9px', color: '#555', marginLeft: '24px', marginTop: '2px' }}>
-              {savedBill ? savedBill.customer.address : customer.address}
+          {displayCustomer.address && (
+            <div style={{ fontSize:'9.5px', color:'#555', marginLeft:'30px', marginTop:'3px' }}>
+              {displayCustomer.address}
             </div>
           )}
-          {(savedBill ? savedBill.customer.mobile : customer.mobile) && (
-            <div style={{ fontSize: '9px', color: '#666', marginLeft: '24px' }}>
-              📱 {savedBill ? savedBill.customer.mobile : customer.mobile}
+          {displayCustomer.mobile && (
+            <div style={{ fontSize:'9.5px', color:'#666', marginLeft:'30px' }}>
+              📱 {displayCustomer.mobile}
             </div>
           )}
         </div>
-
-        {/* Bill No + Date — fixed width to prevent overflow */}
-        <div style={{ textAlign: 'right', flexShrink: 0, minWidth: '90px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '3px' }}>
-            <span style={{ fontWeight: 'bold', fontSize: '9.5px', whiteSpace: 'nowrap' }}>{L.billNo}</span>
-            <span style={{ fontWeight: '900', fontSize: '17px', color: '#111', lineHeight: 1 }}>
-              {savedBill ? savedBill.billNo : '___'}
+        <div style={{ textAlign:'right', flexShrink:0, minWidth:'100px' }}>
+          <div style={{ display:'flex', alignItems:'center', justifyContent:'flex-end', gap:'4px' }}>
+            <span style={{ fontWeight:'700', fontSize:'10px', whiteSpace:'nowrap' }}>{L.billNo}</span>
+            <span style={{ fontWeight:'900', fontSize:'20px', color:'#111', lineHeight:1 }}>
+              {displayBillNo ?? '___'}
             </span>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '3px', marginTop: '3px' }}>
-            <span style={{ fontWeight: 'bold', fontSize: '9.5px', whiteSpace: 'nowrap' }}>{L.date}</span>
-            <span style={{ fontSize: '9.5px', whiteSpace: 'nowrap' }}>{dateStr}</span>
+          <div style={{ display:'flex', alignItems:'center', justifyContent:'flex-end', gap:'4px', marginTop:'4px' }}>
+            <span style={{ fontWeight:'700', fontSize:'10px', whiteSpace:'nowrap' }}>{L.date}</span>
+            <span style={{ fontSize:'10.5px', whiteSpace:'nowrap' }}>{dateStr}</span>
           </div>
         </div>
       </div>
 
       {/* ── ITEMS TABLE ── */}
-      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '10px', tableLayout: 'fixed' }}>
+      <table style={{ width:'100%', borderCollapse:'collapse', fontSize:'11px', tableLayout:'fixed' }}>
         <colgroup>
-          <col style={{ width: '24px' }} />
-          <col style={{ width: 'auto' }} />
-          <col style={{ width: '38px' }} />
-          <col style={{ width: '46px' }} />
-          <col style={{ width: '58px' }} />
+          <col style={{ width:'30px' }} />
+          <col />
+          <col style={{ width:'42px' }} />
+          <col style={{ width:'52px' }} />
+          <col style={{ width:'68px' }} />
         </colgroup>
         <thead>
-          <tr style={{ borderBottom: '2px solid #111', background: '#f5f5f5' }}>
-            <th style={{ borderRight: '1px solid #888', padding: '4px 2px', textAlign: 'center', fontWeight: 'bold', fontSize: '10px' }}>{L.srNo}</th>
-            <th style={{ borderRight: '1px solid #888', padding: '4px 6px', textAlign: 'left', fontWeight: 'bold', fontSize: '10px' }}>{L.details}</th>
-            <th style={{ borderRight: '1px solid #888', padding: '4px 2px', textAlign: 'center', fontWeight: 'bold', fontSize: '10px' }}>{L.qty}</th>
-            <th style={{ borderRight: '1px solid #888', padding: '4px 2px', textAlign: 'center', fontWeight: 'bold', fontSize: '10px' }}>{L.rate}</th>
-            <th style={{ padding: '4px 2px', textAlign: 'right', fontWeight: 'bold', fontSize: '10px', paddingRight: '4px' }}>{L.amount}</th>
+          <tr style={{ borderBottom: S.border, background:'#f5f5f5' }}>
+            {[L.srNo, L.details, L.qty, L.rate, L.amount].map((h, i) => (
+              <th key={i} style={{
+                borderRight: i < 4 ? S.borderMid : 'none',
+                padding:'5px 4px', fontWeight:'700',
+                textAlign: i === 0 ? 'center' : i >= 2 ? 'center' : 'left',
+                fontSize:'11px',
+              }}>{h}</th>
+            ))}
           </tr>
         </thead>
         <tbody>
-          {allBillItems.length > 0 ? (
-            <>
-              {allBillItems.map((item, idx) => (
-                <tr key={idx} style={{ borderBottom: '1px solid #ccc' }}>
-                  <td style={{ borderRight: '1px solid #ccc', padding: '4px 2px', textAlign: 'center' }}>{idx + 1}</td>
-                  <td style={{ borderRight: '1px solid #ccc', padding: '4px 6px', wordBreak: 'break-word' }}>{item.description}</td>
-                  <td style={{ borderRight: '1px solid #ccc', padding: '4px 2px', textAlign: 'center' }}>{item.qty}</td>
-                  <td style={{ borderRight: '1px solid #ccc', padding: '4px 2px', textAlign: 'right', paddingRight: '4px' }}>
-                    {item.rate ? parseFloat(item.rate).toLocaleString('en-IN') : ''}
-                  </td>
-                  <td style={{ padding: '4px 4px', textAlign: 'right', fontWeight: '600' }}>
-                    {item.amount ? `${parseFloat(item.amount).toLocaleString('en-IN')}/-` : ''}
-                  </td>
-                </tr>
-              ))}
-              {/* Fill empty rows to make memo look full */}
-              {allBillItems.length < 8 && Array.from({ length: 8 - allBillItems.length }).map((_, i) => (
-                <tr key={`e${i}`} style={{ borderBottom: '1px solid #e0e0e0' }}>
-                  <td style={{ borderRight: '1px solid #e0e0e0', padding: '8px 2px' }}></td>
-                  <td style={{ borderRight: '1px solid #e0e0e0', padding: '8px 6px' }}></td>
-                  <td style={{ borderRight: '1px solid #e0e0e0', padding: '8px 2px' }}></td>
-                  <td style={{ borderRight: '1px solid #e0e0e0', padding: '8px 2px' }}></td>
-                  <td style={{ padding: '8px 4px' }}></td>
-                </tr>
-              ))}
-            </>
-          ) : (
-            Array.from({ length: 10 }).map((_, i) => (
-              <tr key={i} style={{ borderBottom: '1px solid #e0e0e0' }}>
-                <td style={{ borderRight: '1px solid #e0e0e0', padding: '8px 2px', textAlign: 'center', color: '#ddd', fontSize: '9px' }}>{i + 1}</td>
-                <td style={{ borderRight: '1px solid #e0e0e0', padding: '8px 6px' }}></td>
-                <td style={{ borderRight: '1px solid #e0e0e0', padding: '8px 2px' }}></td>
-                <td style={{ borderRight: '1px solid #e0e0e0', padding: '8px 2px' }}></td>
-                <td style={{ padding: '8px 4px' }}></td>
-              </tr>
-            ))
-          )}
+          {/* Filled rows */}
+          {allBillItems.map((item, idx) => (
+            <tr key={idx} style={{ borderBottom: S.borderLight, height: S.rowH }}>
+              <td style={{ borderRight: S.borderLight, textAlign:'center', padding:'3px 2px', verticalAlign:'middle' }}>{idx + 1}</td>
+              <td style={{ borderRight: S.borderLight, padding:'3px 8px', verticalAlign:'middle', wordBreak:'break-word' }}>{item.description}</td>
+              <td style={{ borderRight: S.borderLight, textAlign:'center', padding:'3px 2px', verticalAlign:'middle' }}>{item.qty}</td>
+              <td style={{ borderRight: S.borderLight, textAlign:'right', padding:'3px 6px', verticalAlign:'middle' }}>
+                {item.rate ? parseFloat(item.rate).toLocaleString('en-IN') : ''}
+              </td>
+              <td style={{ textAlign:'right', padding:'3px 8px', fontWeight:'600', verticalAlign:'middle' }}>
+                {item.amount ? `${parseFloat(item.amount).toLocaleString('en-IN')}/-` : ''}
+              </td>
+            </tr>
+          ))}
+          {/* Empty filler rows — always show at least 8 rows total */}
+          {Array.from({ length: Math.max(0, 8 - allBillItems.length) }).map((_, i) => (
+            <tr key={`e${i}`} style={{ borderBottom: S.borderLight, height: S.rowH }}>
+              <td style={{ borderRight: S.borderLight }}></td>
+              <td style={{ borderRight: S.borderLight }}></td>
+              <td style={{ borderRight: S.borderLight }}></td>
+              <td style={{ borderRight: S.borderLight }}></td>
+              <td></td>
+            </tr>
+          ))}
 
-          {/* Total row */}
-          <tr style={{ borderTop: '2px solid #111' }}>
-            <td colSpan={3} style={{ borderRight: '1px solid #888', padding: '5px 8px' }}>
-              <div style={{ border: '1px solid #888', padding: '3px 6px', display: 'inline-block', borderRadius: '2px', fontSize: '9px' }}>
-                <div style={{ fontWeight: 'bold' }}>{L.warranty}</div>
+          {/* ── TOTAL ROW ── */}
+          <tr style={{ borderTop: S.border }}>
+            <td colSpan={3} style={{ borderRight: S.borderMid, padding:'7px 8px', verticalAlign:'middle' }}>
+              <div style={{ border:'1px solid #999', padding:'4px 8px', display:'inline-block', borderRadius:'3px', fontSize:'9.5px' }}>
+                <div style={{ fontWeight:'700' }}>{L.warranty}</div>
                 <div>{L.replacement}</div>
               </div>
             </td>
-            <td style={{ borderRight: '1px solid #888', padding: '5px 2px', textAlign: 'center', fontWeight: '900', color: '#c0392b', fontSize: '12px' }}>
+            <td style={{ borderRight: S.borderMid, textAlign:'center', fontWeight:'900', fontSize:'13px', color: S.red, verticalAlign:'middle' }}>
               {L.total}
             </td>
-            <td style={{ padding: '5px 4px', textAlign: 'right', fontWeight: '900', fontSize: '13px' }}>
-              {total > 0 ? `${total.toLocaleString('en-IN')}/-` : (savedBill ? `${savedBill.total.toLocaleString('en-IN')}/-` : '')}
+            <td style={{ textAlign:'right', fontWeight:'900', fontSize:'14px', padding:'7px 8px', verticalAlign:'middle', whiteSpace:'nowrap' }}>
+              {displayTotal > 0 ? `${displayTotal.toLocaleString('en-IN')}/-` : ''}
             </td>
           </tr>
         </tbody>
       </table>
 
-      {/* ── FOOTER: signatures ── */}
-      <div style={{ borderTop: '1px solid #888', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', padding: '8px 12px 10px' }}>
+      {/* ── FOOTER ── */}
+      <div style={{ borderTop: S.borderMid, display:'flex', justifyContent:'space-between', alignItems:'flex-end', padding:'10px 14px 12px' }}>
         <div>
-          <p style={{ fontWeight: 'bold', fontSize: '9.5px', margin: '0 0 2px 0' }}>{L.custSign}</p>
-          <div style={{ width: '90px', borderBottom: '1px solid #666', marginTop: '28px' }}></div>
+          <p style={{ fontWeight:'700', fontSize:'10.5px', margin:'0 0 2px 0' }}>{L.custSign}</p>
+          <div style={{ width:'100px', borderBottom:'1.5px solid #666', marginTop:'30px' }}></div>
         </div>
-        <div style={{ textAlign: 'center' }}>
-          <img
-            src={signImg}
-            alt="Sagar Kale Signature"
-            style={{ height: '38px', objectFit: 'contain', display: 'block', margin: '0 auto 2px' }}
-          />
-          <p style={{ color: '#c0392b', fontWeight: 'bold', fontSize: '9px', margin: 0 }}>{L.forSign}</p>
+        <div style={{ textAlign:'center' }}>
+          <img src={signImg} alt="Signature"
+            style={{ height:'42px', objectFit:'contain', display:'block', margin:'0 auto 3px' }} />
+          <p style={{ color: S.red, fontWeight:'700', fontSize:'10px', margin:0 }}>{L.forSign}</p>
         </div>
       </div>
     </div>
   );
 
-  // ──────────────────────────────────────────────
+  // ────────────────────────────────────────────────────────────
   return (
     <div className="max-w-7xl mx-auto">
       {/* PAGE HEADER */}
-      <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between mb-6">
+      <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-800">New Bill / Cash Memo</h1>
-          <p className="text-gray-400 text-sm mt-0.5">Fill in details to generate a cash memo</p>
+          <p className="text-gray-400 text-sm mt-0.5">Fill in details — preview updates live on the right</p>
         </div>
-        <div className="flex gap-2 items-center flex-wrap w-full lg:w-auto">
-          {/* Language Toggle */}
+        <div className="flex gap-2 items-center flex-wrap justify-end">
           {!savedBill && (
-            <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-1 w-full sm:w-auto justify-center">
+            <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-1">
               <button onClick={() => setLang('mr')}
-                className={`px-3 py-1.5 rounded-md text-xs font-bold transition ${lang === 'mr' ? 'bg-primary text-white shadow' : 'text-gray-500 hover:text-gray-700'}`}>
+                className={`px-3 py-1.5 rounded-md text-xs font-bold transition ${lang==='mr' ? 'bg-primary text-white shadow' : 'text-gray-500 hover:text-gray-700'}`}>
                 मराठी
               </button>
               <button onClick={() => setLang('en')}
-                className={`px-3 py-1.5 rounded-md text-xs font-bold transition ${lang === 'en' ? 'bg-primary text-white shadow' : 'text-gray-500 hover:text-gray-700'}`}>
+                className={`px-3 py-1.5 rounded-md text-xs font-bold transition ${lang==='en' ? 'bg-primary text-white shadow' : 'text-gray-500 hover:text-gray-700'}`}>
                 English
               </button>
             </div>
           )}
-
           {savedBill ? (
             <>
-              <button onClick={handleWhatsApp} disabled={pdfLoading}
-                className="flex items-center justify-center gap-2 bg-green-500 text-white px-4 py-2.5 rounded-lg text-sm font-semibold hover:bg-green-600 transition disabled:opacity-60 w-full sm:w-auto">
-                {pdfLoading ? '⏳...' : '📱 WhatsApp + PDF'}
-              </button>
-              <button onClick={handleDownloadPDF} disabled={pdfLoading}
-                className="flex items-center justify-center gap-2 bg-accent text-white px-4 py-2.5 rounded-lg text-sm font-semibold hover:opacity-90 transition disabled:opacity-60 w-full sm:w-auto">
-                {pdfLoading ? '⏳...' : '⬇️ Download PDF'}
+              <button onClick={handleWhatsApp}
+                className="flex items-center gap-1.5 bg-green-500 text-white px-4 py-2.5 rounded-lg text-sm font-semibold hover:bg-green-600 transition">
+                📱 WhatsApp
               </button>
               <button onClick={handlePrint}
-                className="flex items-center justify-center gap-2 bg-gray-700 text-white px-4 py-2.5 rounded-lg text-sm font-semibold hover:bg-gray-800 transition w-full sm:w-auto">
-                🖨️ Print
+                className="flex items-center gap-1.5 bg-gray-700 text-white px-4 py-2.5 rounded-lg text-sm font-semibold hover:bg-gray-800 transition">
+                🖨️ Print / PDF
               </button>
               <button onClick={handleNewBill}
-                className="flex items-center justify-center gap-2 bg-primary text-white px-4 py-2.5 rounded-lg text-sm font-semibold hover:bg-blue-800 transition w-full sm:w-auto">
+                className="flex items-center gap-1.5 bg-primary text-white px-4 py-2.5 rounded-lg text-sm font-semibold hover:bg-blue-800 transition">
                 ➕ New Bill
               </button>
             </>
           ) : (
             <button onClick={handleSave} disabled={loading}
-              className="flex items-center justify-center gap-2 bg-primary text-white px-6 py-2.5 rounded-lg text-sm font-semibold hover:bg-blue-800 transition disabled:opacity-50 w-full sm:w-auto">
+              className="flex items-center gap-1.5 bg-primary text-white px-6 py-2.5 rounded-lg text-sm font-semibold hover:bg-blue-800 transition disabled:opacity-50">
               {loading ? '⏳ Saving...' : '💾 Save & Generate Bill'}
             </button>
           )}
         </div>
       </div>
 
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-        {/* ══════════ LEFT — FORM ══════════ */}
+      <div className="grid grid-cols-2 gap-6">
+        {/* ══ LEFT — FORM ══ */}
         <div className="space-y-4">
-
           {/* Language banner */}
           {!savedBill && (
-            <div className={`rounded-lg px-4 py-2.5 text-sm font-medium flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2 ${lang === 'mr' ? 'bg-orange-50 text-orange-700 border border-orange-200' : 'bg-blue-50 text-blue-700 border border-blue-200'}`}>
-              {lang === 'mr' ? '🟠 मराठी भाषेत बिल तयार होईल' : '🔵 Bill will be generated in English'}
-              <span className="sm:ml-auto text-xs opacity-60">{lang === 'mr' ? '(For rural/village customers)' : '(For educated/IT park customers)'}</span>
+            <div className={`rounded-lg px-4 py-2.5 text-sm font-medium flex items-center gap-2 ${lang==='mr' ? 'bg-orange-50 text-orange-700 border border-orange-200' : 'bg-blue-50 text-blue-700 border border-blue-200'}`}>
+              {lang==='mr' ? '🟠 मराठी भाषेत बिल तयार होईल' : '🔵 Bill will be generated in English'}
+              <span className="ml-auto text-xs opacity-60">{lang==='mr' ? '(Village / rural customers)' : '(Educated / IT park customers)'}</span>
             </div>
           )}
 
-          {/* 1. Customer Info */}
+          {/* 1. Customer */}
           <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
             <h2 className="font-bold text-gray-700 mb-4 flex items-center gap-2">
               <span className="bg-primary text-white w-6 h-6 rounded-full text-xs flex items-center justify-center font-bold">1</span>
               Customer Details
             </h2>
             <div className="space-y-3">
-              <div>
-                <label className="text-xs font-medium text-gray-500 mb-1 block">Customer Name *</label>
-                <input type="text" placeholder="e.g. Rushi More" value={customer.name}
-                  onChange={e => setCustomer({ ...customer, name: e.target.value })} disabled={!!savedBill}
-                  className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary disabled:bg-gray-50 transition" />
-              </div>
-              <div>
-                <label className="text-xs font-medium text-gray-500 mb-1 block">Mobile Number *</label>
-                <input type="tel" placeholder="e.g. 9876543210" value={customer.mobile}
-                  onChange={e => setCustomer({ ...customer, mobile: e.target.value })} disabled={!!savedBill}
-                  className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary disabled:bg-gray-50 transition" />
-              </div>
-              <div>
-                <label className="text-xs font-medium text-gray-500 mb-1 block">Address / Location</label>
-                <input type="text" placeholder="e.g. More Vasti, Hadapsar, Pune" value={customer.address}
-                  onChange={e => setCustomer({ ...customer, address: e.target.value })} disabled={!!savedBill}
-                  className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary disabled:bg-gray-50 transition" />
-              </div>
+              {[
+                { label:'Customer Name *', key:'name',    type:'text', placeholder:'e.g. Rushi More' },
+                { label:'Mobile Number *', key:'mobile',  type:'tel',  placeholder:'e.g. 9876543210' },
+                { label:'Address / Location', key:'address', type:'text', placeholder:'e.g. More Vasti, Hadapsar, Pune' },
+              ].map(({ label, key, type, placeholder }) => (
+                <div key={key}>
+                  <label className="text-xs font-medium text-gray-500 mb-1 block">{label}</label>
+                  <input type={type} placeholder={placeholder} value={customer[key]}
+                    onChange={e => setCustomer({ ...customer, [key]: e.target.value })} disabled={!!savedBill}
+                    className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary disabled:bg-gray-50 transition" />
+                </div>
+              ))}
             </div>
           </div>
 
@@ -544,23 +440,23 @@ export default function NewBill() {
                     <input type="checkbox" checked={item.checked} onChange={() => toggleItem(idx)} disabled={!!savedBill}
                       className="w-4 h-4 accent-primary cursor-pointer" />
                     <span className="text-sm font-medium text-gray-700 flex-1">{item.label}</span>
-                    {item.checked && <span className="text-xs text-primary font-bold">₹{(item.amount || 0).toLocaleString('en-IN')}</span>}
+                    {item.checked && <span className="text-xs text-primary font-bold">₹{(item.amount||0).toLocaleString('en-IN')}</span>}
                   </div>
                   {item.checked && (
-                    <div className="px-3 pb-3 space-y-2 border-t border-blue-100 pt-2">
-                      <input type="text" value={item.description} onChange={e => updateItem(idx, 'description', e.target.value)}
+                    <div className="px-3 pb-3 pt-2 space-y-2 border-t border-blue-100">
+                      <input type="text" value={item.description} onChange={e => updateItem(idx,'description',e.target.value)}
                         disabled={!!savedBill} placeholder="Description"
                         className="w-full border border-blue-200 rounded px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-primary bg-white" />
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      <div className="grid grid-cols-2 gap-2">
                         <div>
-                          <label className="text-xs text-gray-400 mb-0.5 block">Qty {item.unit ? `(${item.unit})` : ''}</label>
-                          <input type="number" value={item.qty} onChange={e => updateItem(idx, 'qty', e.target.value)} disabled={!!savedBill}
-                            className="w-full border border-blue-200 rounded px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-primary bg-white" />
+                          <label className="text-xs text-gray-400 mb-0.5 block">Qty {item.unit?`(${item.unit})`:''}</label>
+                          <input type="number" value={item.qty} onChange={e => updateItem(idx,'qty',e.target.value)} disabled={!!savedBill}
+                            className="w-full border border-blue-200 rounded px-2 py-1.5 text-xs bg-white focus:outline-none focus:ring-1 focus:ring-primary" />
                         </div>
                         <div>
                           <label className="text-xs text-gray-400 mb-0.5 block">Rate (₹)</label>
-                          <input type="number" value={item.rate} onChange={e => updateItem(idx, 'rate', e.target.value)} disabled={!!savedBill}
-                            className="w-full border border-blue-200 rounded px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-primary bg-white" />
+                          <input type="number" value={item.rate} onChange={e => updateItem(idx,'rate',e.target.value)} disabled={!!savedBill}
+                            className="w-full border border-blue-200 rounded px-2 py-1.5 text-xs bg-white focus:outline-none focus:ring-1 focus:ring-primary" />
                         </div>
                       </div>
                     </div>
@@ -575,24 +471,24 @@ export default function NewBill() {
                 {customItems.map((item, idx) => (
                   <div key={idx} className="border border-orange-200 bg-orange-50 rounded-lg p-3 space-y-2">
                     <div className="flex items-center gap-2">
-                      <input type="text" value={item.description} onChange={e => updateCustomItem(idx, 'description', e.target.value)}
+                      <input type="text" value={item.description} onChange={e => updateCustomItem(idx,'description',e.target.value)}
                         disabled={!!savedBill} placeholder="Item description"
-                        className="flex-1 border border-orange-200 rounded px-2 py-1.5 text-xs focus:outline-none bg-white" />
-                      {!savedBill && <button onClick={() => removeCustomItem(idx)} className="text-red-400 hover:text-red-600 text-lg">✕</button>}
+                        className="flex-1 border border-orange-200 rounded px-2 py-1.5 text-xs bg-white focus:outline-none" />
+                      {!savedBill && <button onClick={() => removeCustomItem(idx)} className="text-red-400 hover:text-red-600 text-lg leading-none">✕</button>}
                     </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    <div className="grid grid-cols-2 gap-2">
                       <div>
                         <label className="text-xs text-gray-400 mb-0.5 block">Qty</label>
-                        <input type="number" value={item.qty} onChange={e => updateCustomItem(idx, 'qty', e.target.value)}
+                        <input type="number" value={item.qty} onChange={e => updateCustomItem(idx,'qty',e.target.value)}
                           disabled={!!savedBill} className="w-full border border-orange-200 rounded px-2 py-1.5 text-xs bg-white" />
                       </div>
                       <div>
                         <label className="text-xs text-gray-400 mb-0.5 block">Rate (₹)</label>
-                        <input type="number" value={item.rate} onChange={e => updateCustomItem(idx, 'rate', e.target.value)}
+                        <input type="number" value={item.rate} onChange={e => updateCustomItem(idx,'rate',e.target.value)}
                           disabled={!!savedBill} className="w-full border border-orange-200 rounded px-2 py-1.5 text-xs bg-white" />
                       </div>
                     </div>
-                    <p className="text-xs text-right font-semibold text-orange-600">₹{(item.amount || 0).toLocaleString('en-IN')}</p>
+                    <p className="text-xs text-right font-semibold text-orange-600">₹{(item.amount||0).toLocaleString('en-IN')}</p>
                   </div>
                 ))}
               </div>
@@ -617,22 +513,22 @@ export default function NewBill() {
               onChange={e => setCostPrice(e.target.value)} disabled={!!savedBill}
               className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400 disabled:bg-gray-50" />
             {costPrice && (
-              <div className="mt-3 bg-purple-50 rounded-lg p-3 flex flex-col sm:flex-row sm:justify-between gap-1 text-sm">
+              <div className="mt-3 bg-purple-50 rounded-lg p-3 flex justify-between text-sm">
                 <span className="text-gray-600">Estimated Profit:</span>
-                <span className="font-bold text-purple-600">₹{(total - parseFloat(costPrice || 0)).toLocaleString('en-IN')}</span>
+                <span className="font-bold text-purple-600">₹{(total - parseFloat(costPrice||0)).toLocaleString('en-IN')}</span>
               </div>
             )}
           </div>
 
-          {/* Total Card */}
+          {/* Total */}
           <div className="bg-primary rounded-xl p-5 text-white shadow-lg">
             <div className="flex justify-between items-center">
               <div>
                 <p className="text-blue-200 text-sm">Total Amount</p>
-                <p className="text-3xl font-black mt-1">₹{total.toLocaleString('en-IN')}</p>
+                <p className="text-3xl font-black mt-1">₹{displayTotal.toLocaleString('en-IN')}</p>
               </div>
               <div className="text-right">
-                <p className="text-blue-200 text-xs">Items selected</p>
+                <p className="text-blue-200 text-xs">Items</p>
                 <p className="text-2xl font-bold">{allBillItems.length}</p>
               </div>
             </div>
@@ -641,18 +537,19 @@ export default function NewBill() {
           {/* WhatsApp tip */}
           {savedBill && (
             <div className="bg-green-50 border border-green-200 rounded-xl p-4 text-sm text-green-800">
-              <p className="font-bold mb-1">📱 How to send PDF on WhatsApp:</p>
-              <p>1. Click <strong>"WhatsApp + PDF"</strong> — PDF auto-downloads to your device</p>
-              <p>2. WhatsApp opens with message pre-filled</p>
-              <p>3. Click 📎 attachment → select the downloaded PDF</p>
-              <p>4. Send! Done ✅</p>
+              <p className="font-bold mb-1">📱 WhatsApp Message Preview ({lang === 'mr' ? 'मराठी' : 'English'}):</p>
+              <pre className="text-xs whitespace-pre-wrap text-green-700 font-sans mt-2">
+                {lang === 'mr'
+                  ? `🙏 नमस्कार ${savedBill.customer.name} जी,\n\nश्री चिंतामणी इलेक्ट्रिकल्स\nBill No: #${savedBill.billNo}\nदिनांक: ${dateStr}\nएकूण: रु. ${savedBill.total.toLocaleString('en-IN')}\n\n✅ १८ महिने वॉरंटी & रु.८०० बदली शुल्क\n\n💳 UPI : 9527370207 (Sagar Kale)\n\nधन्यवाद 🙏\nSagar Kale: 9527370207`
+                  : `🙏 Dear ${savedBill.customer.name},\n\nShree Chintamani Electricals\nBill No: #${savedBill.billNo}\nDate: ${dateStr}\nTotal: Rs. ${savedBill.total.toLocaleString('en-IN')}\n\n✅ 18 Months Warranty & Rs.800 Replacement Charges\n\n💳 UPI : 9527370207 (Sagar Kale)\n\nThank you 🙏\nSagar Kale: 9527370207`}
+              </pre>
             </div>
           )}
         </div>
 
-        {/* ══════════ RIGHT — LIVE PREVIEW ══════════ */}
+        {/* ══ RIGHT — PREVIEW ══ */}
         <div>
-          <div className="xl:sticky xl:top-6">
+          <div className="sticky top-6">
             <div className="flex items-center justify-between mb-3">
               <p className="text-sm font-semibold text-gray-500 uppercase tracking-wide">📄 Live Preview</p>
               <div className="flex items-center gap-2">
@@ -661,38 +558,28 @@ export default function NewBill() {
                     ✅ Bill #{savedBill.billNo} Saved
                   </span>
                 )}
-                <span className={`text-xs font-bold px-2 py-1 rounded-full ${lang === 'mr' ? 'bg-orange-100 text-orange-600' : 'bg-blue-100 text-blue-600'}`}>
-                  {lang === 'mr' ? '🟠 मराठी' : '🔵 English'}
+                <span className={`text-xs font-bold px-2 py-1 rounded-full ${lang==='mr' ? 'bg-orange-100 text-orange-600' : 'bg-blue-100 text-blue-600'}`}>
+                  {lang==='mr' ? '🟠 मराठी' : '🔵 English'}
                 </span>
               </div>
             </div>
 
-            {/* Render the memo */}
-            <div className="overflow-x-auto">
-              <div className="min-w-[520px]">
-                <CashMemo />
-              </div>
-            </div>
+            <CashMemo />
 
-            {/* Action buttons */}
             {!savedBill ? (
               <button onClick={handleSave} disabled={loading}
                 className="mt-4 w-full bg-primary text-white py-3 rounded-xl font-bold hover:bg-blue-800 transition disabled:opacity-50 text-sm shadow-lg">
                 {loading ? '⏳ Saving...' : '💾 Save & Generate Bill'}
               </button>
             ) : (
-              <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-2">
-                <button onClick={handleWhatsApp} disabled={pdfLoading}
-                  className="bg-green-500 text-white py-2.5 rounded-xl font-bold hover:bg-green-600 transition text-xs shadow disabled:opacity-60">
-                  {pdfLoading ? '⏳' : '📱 WhatsApp\n+ PDF'}
-                </button>
-                <button onClick={handleDownloadPDF} disabled={pdfLoading}
-                  className="bg-accent text-white py-2.5 rounded-xl font-bold hover:opacity-90 transition text-xs shadow disabled:opacity-60">
-                  {pdfLoading ? '⏳' : '⬇️ Download\nPDF'}
+              <div className="mt-4 grid grid-cols-2 gap-3">
+                <button onClick={handleWhatsApp}
+                  className="bg-green-500 text-white py-3 rounded-xl font-bold hover:bg-green-600 transition text-sm shadow">
+                  📱 Send WhatsApp
                 </button>
                 <button onClick={handlePrint}
-                  className="bg-gray-700 text-white py-2.5 rounded-xl font-bold hover:bg-gray-800 transition text-xs shadow">
-                  🖨️ Print
+                  className="bg-gray-700 text-white py-3 rounded-xl font-bold hover:bg-gray-800 transition text-sm shadow">
+                  🖨️ Print / Save PDF
                 </button>
               </div>
             )}
@@ -700,21 +587,36 @@ export default function NewBill() {
         </div>
       </div>
 
-      {/* Print CSS */}
+      {/* ════════════════════════════════
+          PRINT CSS — only cash-memo prints, 1 page, A5
+          ════════════════════════════════ */}
       <style>{`
         @media print {
-          body * { visibility: hidden !important; }
-          #cash-memo, #cash-memo * { visibility: visible !important; }
+          /* Hide everything except the memo */
+          body > * { display: none !important; }
+          #root > * { display: none !important; }
           #cash-memo {
+            display: block !important;
             position: fixed !important;
-            top: 0 !important; left: 0 !important;
+            top: 0 !important;
+            left: 0 !important;
             width: 148mm !important;
-            border: 2px solid #111 !important;
+            border: 2px solid #1a1a1a !important;
             box-shadow: none !important;
-            padding: 0 !important;
             margin: 0 !important;
+            padding: 0 !important;
+            font-size: 11.5pt !important;
           }
-          @page { size: A5 portrait; margin: 5mm; }
+          #cash-memo * { visibility: visible !important; }
+
+          /* Force single page A5 */
+          @page {
+            size: A5 portrait;
+            margin: 6mm;
+          }
+
+          /* Remove browser header/footer */
+          @page { margin-top: 0; margin-bottom: 0; }
         }
       `}</style>
     </div>
