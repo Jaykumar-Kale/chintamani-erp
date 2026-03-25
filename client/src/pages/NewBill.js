@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState } from 'react';
 import api from '../utils/api';
 import toast from 'react-hot-toast';
 import signImg from '../assets/sign.jpg';
@@ -61,26 +61,14 @@ const LANG = {
   },
 };
 
-// ── Shared memo styles ──
-const S = {
-  border:     '2px solid #1a1a1a',
-  borderLight:'1px solid #bbbbbb',
-  borderMid:  '1px solid #888888',
-  red:        '#c0392b',
-  bg:         '#ffffff',
-  rowH:       '28px',
-};
-
 export default function NewBill() {
-  const [lang, setLang]           = useState('mr');
-  const [customer, setCustomer]   = useState({ name: '', mobile: '', address: '' });
-  const [items, setItems]         = useState(DEFAULT_ITEMS.map(i => ({ ...i })));
+  const [lang, setLang]               = useState('mr');
+  const [customer, setCustomer]       = useState({ name: '', mobile: '', address: '' });
+  const [items, setItems]             = useState(DEFAULT_ITEMS.map(i => ({ ...i })));
   const [customItems, setCustomItems] = useState([]);
-  const [costPrice, setCostPrice] = useState('');
-  const [loading, setLoading]     = useState(false);
-  const [savedBill, setSavedBill] = useState(null);
-  // eslint-disable-next-line no-unused-vars
-  const memoRef = useRef();
+  const [costPrice, setCostPrice]     = useState('');
+  const [loading, setLoading]         = useState(false);
+  const [savedBill, setSavedBill]     = useState(null);
 
   const L       = LANG[lang];
   const today   = new Date();
@@ -117,14 +105,12 @@ export default function NewBill() {
   const removeCustomItem = (idx) =>
     setCustomItems(p => p.filter((_, i) => i !== idx));
 
-  const allBillItems = [...items.filter(i => i.checked), ...customItems];
-  const total = allBillItems.reduce((s, i) => s + (parseFloat(i.amount) || 0), 0);
+  const allBillItems   = [...items.filter(i => i.checked), ...customItems];
+  const total          = allBillItems.reduce((s, i) => s + (parseFloat(i.amount) || 0), 0);
+  const displayTotal   = savedBill ? savedBill.total : total;
+  const displayBillNo  = savedBill ? savedBill.billNo : null;
+  const displayCust    = savedBill ? savedBill.customer : customer;
 
-  const displayTotal = savedBill ? savedBill.total : total;
-  const displayBillNo = savedBill ? savedBill.billNo : null;
-  const displayCustomer = savedBill ? savedBill.customer : customer;
-
-  // ── Save to DB ──
   const handleSave = async () => {
     if (!customer.name || !customer.mobile) { toast.error('Customer name & mobile required!'); return; }
     if (allBillItems.length === 0)           { toast.error('Select at least one item!'); return; }
@@ -150,10 +136,16 @@ export default function NewBill() {
     setLoading(false);
   };
 
-  // ── Print → browser "Save as PDF" gives pixel-perfect output ──
-  const handlePrint = () => window.print();
+  // ── KEY FIX: set document title = customer name so PDF filename is correct ──
+  const handlePrint = () => {
+    const prevTitle = document.title;
+    const custName  = (savedBill?.customer?.name || customer.name || 'Bill').replace(/\s+/g, '_');
+    const billNo    = savedBill?.billNo || '';
+    document.title  = `${custName}_Bill_${billNo}`;
+    window.print();
+    setTimeout(() => { document.title = prevTitle; }, 2000);
+  };
 
-  // ── WhatsApp with personalized bilingual message ──
   const handleWhatsApp = () => {
     if (!savedBill) return;
     const name   = savedBill.customer.name;
@@ -165,7 +157,6 @@ export default function NewBill() {
       ? `🙏 नमस्कार ${name} जी,\n\nश्री चिंतामणी इलेक्ट्रिकल्स\nBill No: #${billNo}\nदिनांक: ${dateStr}\nएकूण: रु. ${amt}\n\n✅ १८ महिने वॉरंटी & रु.८०० बदली शुल्क\n\n💳 UPI : 9527370207 (Sagar Kale)\n\nधन्यवाद 🙏\nSagar Kale: 9527370207`
       : `🙏 Dear ${name},\n\nShree Chintamani Electricals\nBill No: #${billNo}\nDate: ${dateStr}\nTotal: Rs. ${amt}\n\n✅ 18 Months Warranty & Rs.800 Replacement Charges\n\n💳 UPI : 9527370207 (Sagar Kale)\n\nThank you 🙏\nSagar Kale: 9527370207`;
 
-    // Opens WhatsApp from Sagar's number (9527370207) to customer
     window.open(`https://wa.me/91${mobile}?text=${encodeURIComponent(msg)}`);
   };
 
@@ -177,180 +168,45 @@ export default function NewBill() {
     setCostPrice('');
   };
 
-  // ────────────────────────────────────────────────────────────
-  //  CASH MEMO COMPONENT  — identical for screen + print
-  // ────────────────────────────────────────────────────────────
   const fontFamily = lang === 'mr'
     ? "'Noto Sans Devanagari','Mangal',sans-serif"
     : "'Inter','Segoe UI',sans-serif";
 
-  const CashMemo = () => (
-    <div
-      id="cash-memo"
-      style={{
-        fontFamily,
-        fontSize: '11.5px',
-        background: S.bg,
-        border: S.border,
-        width: '100%',
-        boxSizing: 'border-box',
-        color: '#111',
-      }}
-    >
-      {/* ── HEADER ── */}
-      <div style={{ borderBottom: S.border, padding: '8px 12px 7px' }}>
-        {/* Row 1: label | tagline | phone */}
-        <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:'6px' }}>
-          <span style={{ border:'1.5px solid #333', padding:'2px 7px', fontSize:'10px', fontWeight:'700', whiteSpace:'nowrap', alignSelf:'center' }}>
-            {L.cashMemo}
-          </span>
-          <span style={{ fontWeight:'700', fontSize:'12px', textAlign:'center', flex:1, margin:'0 10px', alignSelf:'center' }}>
-            {L.tagline}
-          </span>
-          <div style={{ textAlign:'right', fontSize:'10px', lineHeight:'1.6', whiteSpace:'nowrap' }}>
-            <div>Mob : 9527370207</div>
-            <div>9970780137</div>
-          </div>
-        </div>
+  // ── EMPTY ROWS: always show minimum 8 rows ──
+  const emptyRows = Math.max(0, 8 - allBillItems.length);
 
-        {/* Row 2: left-image | company info | right-image */}
-        <div style={{ display:'flex', alignItems:'center', gap:'8px' }}>
-          <img src={motorRight} alt="pumps"
-            style={{ height:'64px', width:'64px', objectFit:'contain', flexShrink:0 }} />
-          <div style={{ flex:1, textAlign:'center' }}>
-            <div style={{ color:S.red, fontWeight:'900', fontSize:'16px', lineHeight:'1.25', letterSpacing:'-0.2px' }}>
-              {L.company}
-            </div>
-            <div style={{ fontSize:'9.5px', color:'#555', marginTop:'3px' }}>{L.subtext}</div>
-            <div style={{ fontSize:'9.5px', color:'#555' }}>{L.address}</div>
-            <div style={{ fontSize:'10px', fontWeight:'700', color:'#222', marginTop:'2px' }}>{L.propr}</div>
-          </div>
-          <img src={motorLeft} alt="motor"
-            style={{ height:'64px', width:'64px', objectFit:'contain', flexShrink:0 }} />
-        </div>
-      </div>
-
-      {/* ── CUSTOMER + BILL NO ── */}
-      <div style={{ borderBottom: S.borderMid, padding:'8px 12px', display:'flex', justifyContent:'space-between', alignItems:'flex-start', gap:'12px' }}>
-        <div style={{ flex:1, minWidth:0 }}>
-          <div style={{ display:'flex', alignItems:'baseline', gap:'4px' }}>
-            <span style={{ fontWeight:'700', fontSize:'12.5px', flexShrink:0 }}>{L.shri}</span>
-            <span style={{
-              fontWeight:'600', borderBottom:'1.5px solid #555',
-              flex:1, paddingBottom:'2px', fontSize:'12px',
-              overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap',
-            }}>
-              {displayCustomer.name || ''}
-            </span>
-          </div>
-          {displayCustomer.address && (
-            <div style={{ fontSize:'9.5px', color:'#555', marginLeft:'30px', marginTop:'3px' }}>
-              {displayCustomer.address}
-            </div>
-          )}
-          {displayCustomer.mobile && (
-            <div style={{ fontSize:'9.5px', color:'#666', marginLeft:'30px' }}>
-              📱 {displayCustomer.mobile}
-            </div>
-          )}
-        </div>
-        <div style={{ textAlign:'right', flexShrink:0, minWidth:'100px' }}>
-          <div style={{ display:'flex', alignItems:'center', justifyContent:'flex-end', gap:'4px' }}>
-            <span style={{ fontWeight:'700', fontSize:'10px', whiteSpace:'nowrap' }}>{L.billNo}</span>
-            <span style={{ fontWeight:'900', fontSize:'20px', color:'#111', lineHeight:1 }}>
-              {displayBillNo ?? '___'}
-            </span>
-          </div>
-          <div style={{ display:'flex', alignItems:'center', justifyContent:'flex-end', gap:'4px', marginTop:'4px' }}>
-            <span style={{ fontWeight:'700', fontSize:'10px', whiteSpace:'nowrap' }}>{L.date}</span>
-            <span style={{ fontSize:'10.5px', whiteSpace:'nowrap' }}>{dateStr}</span>
-          </div>
-        </div>
-      </div>
-
-      {/* ── ITEMS TABLE ── */}
-      <table style={{ width:'100%', borderCollapse:'collapse', fontSize:'11px', tableLayout:'fixed' }}>
-        <colgroup>
-          <col style={{ width:'30px' }} />
-          <col />
-          <col style={{ width:'42px' }} />
-          <col style={{ width:'52px' }} />
-          <col style={{ width:'68px' }} />
-        </colgroup>
-        <thead>
-          <tr style={{ borderBottom: S.border, background:'#f5f5f5' }}>
-            {[L.srNo, L.details, L.qty, L.rate, L.amount].map((h, i) => (
-              <th key={i} style={{
-                borderRight: i < 4 ? S.borderMid : 'none',
-                padding:'5px 4px', fontWeight:'700',
-                textAlign: i === 0 ? 'center' : i >= 2 ? 'center' : 'left',
-                fontSize:'11px',
-              }}>{h}</th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {/* Filled rows */}
-          {allBillItems.map((item, idx) => (
-            <tr key={idx} style={{ borderBottom: S.borderLight, height: S.rowH }}>
-              <td style={{ borderRight: S.borderLight, textAlign:'center', padding:'3px 2px', verticalAlign:'middle' }}>{idx + 1}</td>
-              <td style={{ borderRight: S.borderLight, padding:'3px 8px', verticalAlign:'middle', wordBreak:'break-word' }}>{item.description}</td>
-              <td style={{ borderRight: S.borderLight, textAlign:'center', padding:'3px 2px', verticalAlign:'middle' }}>{item.qty}</td>
-              <td style={{ borderRight: S.borderLight, textAlign:'right', padding:'3px 6px', verticalAlign:'middle' }}>
-                {item.rate ? parseFloat(item.rate).toLocaleString('en-IN') : ''}
-              </td>
-              <td style={{ textAlign:'right', padding:'3px 8px', fontWeight:'600', verticalAlign:'middle' }}>
-                {item.amount ? `${parseFloat(item.amount).toLocaleString('en-IN')}/-` : ''}
-              </td>
-            </tr>
-          ))}
-          {/* Empty filler rows — always show at least 8 rows total */}
-          {Array.from({ length: Math.max(0, 8 - allBillItems.length) }).map((_, i) => (
-            <tr key={`e${i}`} style={{ borderBottom: S.borderLight, height: S.rowH }}>
-              <td style={{ borderRight: S.borderLight }}></td>
-              <td style={{ borderRight: S.borderLight }}></td>
-              <td style={{ borderRight: S.borderLight }}></td>
-              <td style={{ borderRight: S.borderLight }}></td>
-              <td></td>
-            </tr>
-          ))}
-
-          {/* ── TOTAL ROW ── */}
-          <tr style={{ borderTop: S.border }}>
-            <td colSpan={3} style={{ borderRight: S.borderMid, padding:'7px 8px', verticalAlign:'middle' }}>
-              <div style={{ border:'1px solid #999', padding:'4px 8px', display:'inline-block', borderRadius:'3px', fontSize:'9.5px' }}>
-                <div style={{ fontWeight:'700' }}>{L.warranty}</div>
-                <div>{L.replacement}</div>
-              </div>
-            </td>
-            <td style={{ borderRight: S.borderMid, textAlign:'center', fontWeight:'900', fontSize:'13px', color: S.red, verticalAlign:'middle' }}>
-              {L.total}
-            </td>
-            <td style={{ textAlign:'right', fontWeight:'900', fontSize:'14px', padding:'7px 8px', verticalAlign:'middle', whiteSpace:'nowrap' }}>
-              {displayTotal > 0 ? `${displayTotal.toLocaleString('en-IN')}/-` : ''}
-            </td>
-          </tr>
-        </tbody>
-      </table>
-
-      {/* ── FOOTER ── */}
-      <div style={{ borderTop: S.borderMid, display:'flex', justifyContent:'space-between', alignItems:'flex-end', padding:'10px 14px 12px' }}>
-        <div>
-          <p style={{ fontWeight:'700', fontSize:'10.5px', margin:'0 0 2px 0' }}>{L.custSign}</p>
-          <div style={{ width:'100px', borderBottom:'1.5px solid #666', marginTop:'30px' }}></div>
-        </div>
-        <div style={{ textAlign:'center' }}>
-          <img src={signImg} alt="Signature"
-            style={{ height:'42px', objectFit:'contain', display:'block', margin:'0 auto 3px' }} />
-          <p style={{ color: S.red, fontWeight:'700', fontSize:'10px', margin:0 }}>{L.forSign}</p>
-        </div>
-      </div>
-    </div>
-  );
-
-  // ────────────────────────────────────────────────────────────
+  // ─────────────────────────────────────────────────────────────────
   return (
     <div className="max-w-7xl mx-auto">
+
+      {/* ══ PRINT CSS — THE ONLY CORRECT WAY ══
+          visibility:hidden hides body, then visibility:visible shows only #cash-memo
+          This is the standard approach — display:none breaks it completely */}
+      <style>{`
+        @media print {
+          body * {
+            visibility: hidden;
+          }
+          #cash-memo,
+          #cash-memo * {
+            visibility: visible;
+          }
+          #cash-memo {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            border: 2px solid #1a1a1a !important;
+            box-shadow: none !important;
+            margin: 0 !important;
+          }
+          @page {
+            size: A5 portrait;
+            margin: 8mm;
+          }
+        }
+      `}</style>
+
       {/* PAGE HEADER */}
       <div className="flex items-center justify-between mb-6">
         <div>
@@ -395,9 +251,10 @@ export default function NewBill() {
       </div>
 
       <div className="grid grid-cols-2 gap-6">
-        {/* ══ LEFT — FORM ══ */}
+
+        {/* ══════════ LEFT — FORM ══════════ */}
         <div className="space-y-4">
-          {/* Language banner */}
+
           {!savedBill && (
             <div className={`rounded-lg px-4 py-2.5 text-sm font-medium flex items-center gap-2 ${lang==='mr' ? 'bg-orange-50 text-orange-700 border border-orange-200' : 'bg-blue-50 text-blue-700 border border-blue-200'}`}>
               {lang==='mr' ? '🟠 मराठी भाषेत बिल तयार होईल' : '🔵 Bill will be generated in English'}
@@ -413,8 +270,8 @@ export default function NewBill() {
             </h2>
             <div className="space-y-3">
               {[
-                { label:'Customer Name *', key:'name',    type:'text', placeholder:'e.g. Rushi More' },
-                { label:'Mobile Number *', key:'mobile',  type:'tel',  placeholder:'e.g. 9876543210' },
+                { label:'Customer Name *',    key:'name',    type:'text', placeholder:'e.g. Rushi More' },
+                { label:'Mobile Number *',    key:'mobile',  type:'tel',  placeholder:'e.g. 9876543210' },
                 { label:'Address / Location', key:'address', type:'text', placeholder:'e.g. More Vasti, Hadapsar, Pune' },
               ].map(({ label, key, type, placeholder }) => (
                 <div key={key}>
@@ -449,7 +306,7 @@ export default function NewBill() {
                         className="w-full border border-blue-200 rounded px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-primary bg-white" />
                       <div className="grid grid-cols-2 gap-2">
                         <div>
-                          <label className="text-xs text-gray-400 mb-0.5 block">Qty {item.unit?`(${item.unit})`:''}</label>
+                          <label className="text-xs text-gray-400 mb-0.5 block">Qty {item.unit ? `(${item.unit})` : ''}</label>
                           <input type="number" value={item.qty} onChange={e => updateItem(idx,'qty',e.target.value)} disabled={!!savedBill}
                             className="w-full border border-blue-200 rounded px-2 py-1.5 text-xs bg-white focus:outline-none focus:ring-1 focus:ring-primary" />
                         </div>
@@ -534,11 +391,11 @@ export default function NewBill() {
             </div>
           </div>
 
-          {/* WhatsApp tip */}
+          {/* WhatsApp preview */}
           {savedBill && (
             <div className="bg-green-50 border border-green-200 rounded-xl p-4 text-sm text-green-800">
-              <p className="font-bold mb-1">📱 WhatsApp Message Preview ({lang === 'mr' ? 'मराठी' : 'English'}):</p>
-              <pre className="text-xs whitespace-pre-wrap text-green-700 font-sans mt-2">
+              <p className="font-bold mb-2">📱 WhatsApp Message Preview:</p>
+              <pre className="text-xs whitespace-pre-wrap text-green-700 font-sans bg-white p-3 rounded-lg border border-green-100">
                 {lang === 'mr'
                   ? `🙏 नमस्कार ${savedBill.customer.name} जी,\n\nश्री चिंतामणी इलेक्ट्रिकल्स\nBill No: #${savedBill.billNo}\nदिनांक: ${dateStr}\nएकूण: रु. ${savedBill.total.toLocaleString('en-IN')}\n\n✅ १८ महिने वॉरंटी & रु.८०० बदली शुल्क\n\n💳 UPI : 9527370207 (Sagar Kale)\n\nधन्यवाद 🙏\nSagar Kale: 9527370207`
                   : `🙏 Dear ${savedBill.customer.name},\n\nShree Chintamani Electricals\nBill No: #${savedBill.billNo}\nDate: ${dateStr}\nTotal: Rs. ${savedBill.total.toLocaleString('en-IN')}\n\n✅ 18 Months Warranty & Rs.800 Replacement Charges\n\n💳 UPI : 9527370207 (Sagar Kale)\n\nThank you 🙏\nSagar Kale: 9527370207`}
@@ -547,7 +404,7 @@ export default function NewBill() {
           )}
         </div>
 
-        {/* ══ RIGHT — PREVIEW ══ */}
+        {/* ══════════ RIGHT — LIVE PREVIEW ══════════ */}
         <div>
           <div className="sticky top-6">
             <div className="flex items-center justify-between mb-3">
@@ -564,8 +421,173 @@ export default function NewBill() {
               </div>
             </div>
 
-            <CashMemo />
+            {/* ═══════════════════════════════════
+                THE CASH MEMO — id="cash-memo"
+                This exact div prints when Print is clicked
+                ═══════════════════════════════════ */}
+            <div
+              id="cash-memo"
+              style={{
+                fontFamily,
+                fontSize: '11.5px',
+                background: '#ffffff',
+                border: '2.5px solid #1a1a1a',
+                width: '100%',
+                boxSizing: 'border-box',
+                color: '#111111',
+              }}
+            >
+              {/* HEADER */}
+              <div style={{ borderBottom: '2px solid #1a1a1a', padding: '8px 12px 7px' }}>
 
+                {/* Row 1: Cash Memo label | tagline | phone */}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                  <span style={{ border: '1.5px solid #444', padding: '2px 7px', fontSize: '9.5px', fontWeight: '800', whiteSpace: 'nowrap' }}>
+                    {L.cashMemo}
+                  </span>
+                  <span style={{ fontWeight: '700', fontSize: '12px', textAlign: 'center', flex: 1, margin: '0 10px' }}>
+                    {L.tagline}
+                  </span>
+                  <div style={{ textAlign: 'right', fontSize: '10px', lineHeight: '1.6', whiteSpace: 'nowrap' }}>
+                    <div>Mob : 9527370207</div>
+                    <div>9970780137</div>
+                  </div>
+                </div>
+
+                {/* Row 2: left pump image | company details | right motor image */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <img src={motorRight} alt="pumps"
+                    style={{ height: '66px', width: '66px', objectFit: 'contain', flexShrink: 0 }} />
+
+                  <div style={{ flex: 1, textAlign: 'center' }}>
+                    <div style={{ color: '#c0392b', fontWeight: '900', fontSize: lang === 'en' ? '17px' : '15px', lineHeight: '1.25' }}>
+                      {L.company}
+                    </div>
+                    <div style={{ fontSize: '9.5px', color: '#555', marginTop: '3px' }}>{L.subtext}</div>
+                    <div style={{ fontSize: '9.5px', color: '#555' }}>{L.address}</div>
+                    <div style={{ fontSize: '10px', fontWeight: '700', color: '#222', marginTop: '2px' }}>{L.propr}</div>
+                  </div>
+
+                  <img src={motorLeft} alt="motor"
+                    style={{ height: '66px', width: '66px', objectFit: 'contain', flexShrink: 0 }} />
+                </div>
+              </div>
+
+              {/* CUSTOMER + BILL NO */}
+              <div style={{ borderBottom: '1px solid #888', padding: '8px 12px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '12px' }}>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ display: 'flex', alignItems: 'baseline', gap: '4px' }}>
+                    <span style={{ fontWeight: '700', fontSize: '12px', flexShrink: 0 }}>{L.shri}</span>
+                    <span style={{ fontWeight: '600', borderBottom: '1.5px solid #555', flex: 1, paddingBottom: '2px', fontSize: '12px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {displayCust.name || ''}
+                    </span>
+                  </div>
+                  {displayCust.address && (
+                    <div style={{ fontSize: '9.5px', color: '#555', marginLeft: '28px', marginTop: '3px' }}>
+                      {displayCust.address}
+                    </div>
+                  )}
+                  {displayCust.mobile && (
+                    <div style={{ fontSize: '9.5px', color: '#666', marginLeft: '28px' }}>
+                      📱 {displayCust.mobile}
+                    </div>
+                  )}
+                </div>
+
+                {/* Bill No + Date — RIGHT SIDE fixed width so nothing overflows */}
+                <div style={{ textAlign: 'right', flexShrink: 0, minWidth: '110px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '4px' }}>
+                    <span style={{ fontWeight: '700', fontSize: '10px', whiteSpace: 'nowrap' }}>{L.billNo}</span>
+                    <span style={{ fontWeight: '900', fontSize: '22px', color: '#111', lineHeight: 1 }}>
+                      {displayBillNo ?? '___'}
+                    </span>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '4px', marginTop: '4px' }}>
+                    <span style={{ fontWeight: '700', fontSize: '10px', whiteSpace: 'nowrap' }}>{L.date}</span>
+                    <span style={{ fontSize: '10.5px', whiteSpace: 'nowrap' }}>{dateStr}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* ITEMS TABLE */}
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '11px', tableLayout: 'fixed' }}>
+                <colgroup>
+                  <col style={{ width: '28px' }} />
+                  <col />
+                  <col style={{ width: '40px' }} />
+                  <col style={{ width: '52px' }} />
+                  <col style={{ width: '70px' }} />
+                </colgroup>
+                <thead>
+                  <tr style={{ borderBottom: '2px solid #1a1a1a', background: '#f5f5f5' }}>
+                    <th style={{ borderRight: '1px solid #888', padding: '5px 2px', textAlign: 'center', fontWeight: '700' }}>{L.srNo}</th>
+                    <th style={{ borderRight: '1px solid #888', padding: '5px 8px', textAlign: 'left',   fontWeight: '700' }}>{L.details}</th>
+                    <th style={{ borderRight: '1px solid #888', padding: '5px 2px', textAlign: 'center', fontWeight: '700' }}>{L.qty}</th>
+                    <th style={{ borderRight: '1px solid #888', padding: '5px 2px', textAlign: 'center', fontWeight: '700' }}>{L.rate}</th>
+                    <th style={{ padding: '5px 6px', textAlign: 'right', fontWeight: '700' }}>{L.amount}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {/* Filled item rows */}
+                  {allBillItems.map((item, idx) => (
+                    <tr key={idx} style={{ borderBottom: '1px solid #cccccc', height: '26px' }}>
+                      <td style={{ borderRight: '1px solid #cccccc', textAlign: 'center', padding: '3px 2px', verticalAlign: 'middle' }}>{idx + 1}</td>
+                      <td style={{ borderRight: '1px solid #cccccc', padding: '3px 8px', verticalAlign: 'middle', wordBreak: 'break-word' }}>{item.description}</td>
+                      <td style={{ borderRight: '1px solid #cccccc', textAlign: 'center', padding: '3px 2px', verticalAlign: 'middle' }}>{item.qty}</td>
+                      <td style={{ borderRight: '1px solid #cccccc', textAlign: 'right', padding: '3px 6px', verticalAlign: 'middle' }}>
+                        {item.rate ? parseFloat(item.rate).toLocaleString('en-IN') : ''}
+                      </td>
+                      <td style={{ textAlign: 'right', padding: '3px 6px', fontWeight: '600', verticalAlign: 'middle', whiteSpace: 'nowrap' }}>
+                        {item.amount ? `${parseFloat(item.amount).toLocaleString('en-IN')}/-` : ''}
+                      </td>
+                    </tr>
+                  ))}
+
+                  {/* Empty filler rows */}
+                  {Array.from({ length: emptyRows }).map((_, i) => (
+                    <tr key={`empty-${i}`} style={{ borderBottom: '1px solid #dddddd', height: '26px' }}>
+                      <td style={{ borderRight: '1px solid #dddddd' }}></td>
+                      <td style={{ borderRight: '1px solid #dddddd' }}></td>
+                      <td style={{ borderRight: '1px solid #dddddd' }}></td>
+                      <td style={{ borderRight: '1px solid #dddddd' }}></td>
+                      <td></td>
+                    </tr>
+                  ))}
+
+                  {/* TOTAL ROW */}
+                  <tr style={{ borderTop: '2px solid #1a1a1a' }}>
+                    <td colSpan={3} style={{ borderRight: '1px solid #888', padding: '7px 8px', verticalAlign: 'middle' }}>
+                      <div style={{ border: '1px solid #999', padding: '4px 8px', display: 'inline-block', borderRadius: '3px', fontSize: '9.5px' }}>
+                        <div style={{ fontWeight: '700' }}>{L.warranty}</div>
+                        <div>{L.replacement}</div>
+                      </div>
+                    </td>
+                    <td style={{ borderRight: '1px solid #888', textAlign: 'center', fontWeight: '900', fontSize: '13px', color: '#c0392b', verticalAlign: 'middle' }}>
+                      {L.total}
+                    </td>
+                    <td style={{ textAlign: 'right', fontWeight: '900', fontSize: '14px', padding: '7px 6px', verticalAlign: 'middle', whiteSpace: 'nowrap' }}>
+                      {displayTotal > 0 ? `${displayTotal.toLocaleString('en-IN')}/-` : ''}
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+
+              {/* FOOTER */}
+              <div style={{ borderTop: '1px solid #888', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', padding: '10px 14px 12px' }}>
+                <div>
+                  <p style={{ fontWeight: '700', fontSize: '10.5px', margin: '0 0 2px 0' }}>{L.custSign}</p>
+                  <div style={{ width: '100px', borderBottom: '1.5px solid #666', marginTop: '30px' }}></div>
+                </div>
+                <div style={{ textAlign: 'center' }}>
+                  <img src={signImg} alt="Signature"
+                    style={{ height: '42px', objectFit: 'contain', display: 'block', margin: '0 auto 3px' }} />
+                  <p style={{ color: '#c0392b', fontWeight: '700', fontSize: '10px', margin: 0 }}>{L.forSign}</p>
+                </div>
+              </div>
+            </div>
+            {/* ══ END CASH MEMO ══ */}
+
+            {/* Action buttons under preview */}
             {!savedBill ? (
               <button onClick={handleSave} disabled={loading}
                 className="mt-4 w-full bg-primary text-white py-3 rounded-xl font-bold hover:bg-blue-800 transition disabled:opacity-50 text-sm shadow-lg">
@@ -586,39 +608,6 @@ export default function NewBill() {
           </div>
         </div>
       </div>
-
-      {/* ════════════════════════════════
-          PRINT CSS — only cash-memo prints, 1 page, A5
-          ════════════════════════════════ */}
-      <style>{`
-        @media print {
-          /* Hide everything except the memo */
-          body > * { display: none !important; }
-          #root > * { display: none !important; }
-          #cash-memo {
-            display: block !important;
-            position: fixed !important;
-            top: 0 !important;
-            left: 0 !important;
-            width: 148mm !important;
-            border: 2px solid #1a1a1a !important;
-            box-shadow: none !important;
-            margin: 0 !important;
-            padding: 0 !important;
-            font-size: 11.5pt !important;
-          }
-          #cash-memo * { visibility: visible !important; }
-
-          /* Force single page A5 */
-          @page {
-            size: A5 portrait;
-            margin: 6mm;
-          }
-
-          /* Remove browser header/footer */
-          @page { margin-top: 0; margin-bottom: 0; }
-        }
-      `}</style>
     </div>
   );
 }
