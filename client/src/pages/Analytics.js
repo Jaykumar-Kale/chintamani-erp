@@ -90,7 +90,7 @@ export default function Analytics() {
       </div>
 
       {/* Overall stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 mb-6">
+      <div className="grid grid-cols-2 xl:grid-cols-3 gap-3 mb-6">
         <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-xl p-5 text-white shadow-lg">
           <div className="text-3xl mb-1"></div>
           <div className="text-2xl font-black">
@@ -114,7 +114,7 @@ export default function Analytics() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 mb-6">
+      <div className="grid grid-cols-1 gap-6 mb-6 xl:grid-cols-2">
         {/* Calendar */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 sm:p-5">
           <div className="flex items-center justify-between mb-4 gap-2">

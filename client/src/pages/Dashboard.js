@@ -65,7 +65,7 @@ export default function Dashboard() {
       </div>
 
       {/* STATS */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-2 xl:grid-cols-4 gap-3 mb-6">
         <div className="bg-gradient-to-br from-blue-500 to-primary rounded-xl p-5 text-white shadow-lg">
           <div className="text-2xl font-black">{stats?.totalBills || 0}</div>
           <div className="text-blue-100 text-sm">Total Bills</div>

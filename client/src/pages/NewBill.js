@@ -1129,8 +1129,8 @@ export default function NewBill() {
               </p>
               <pre className="text-xs whitespace-pre-wrap text-green-700 font-sans bg-white p-3 rounded-lg border border-green-100 leading-relaxed">
                 {lang === "mr"
-                  ? `नमस्कार ${savedBill.customer.name}\n\nश्री चिंतामणी इलेक्ट्रिकल्स\nदिनांक: ${dateStr}\nएकूण: रु. ${savedBill.total.toLocaleString("en-IN")}\nकृपया GPay / PhonePe वापरून पैसे द्या : \nUPI No: 9527370207 (Sagar Kale)\nधन्यवाद....`
-                  : `Dear ${savedBill.customer.name}\n\nShree Chintamani Electricals\nDate: ${dateStr}\nTotal: Rs. ${savedBill.total.toLocaleString("en-IN")}\n\nPlease Pay using Gpay/Phone : \nUPI No: 9527370207 (Sagar Kale)\nThank you....`}
+                  ? `नमस्कार ${savedBill.customer.name}\nश्री चिंतामणी इलेक्ट्रिकल्स\nदिनांक: ${dateStr}\nएकूण: रु. ${savedBill.total.toLocaleString("en-IN")}\nकृपया GPay / PhonePe वापरून पैसे द्या : \nUPI No: 9527370207 \nधन्यवाद....`
+                  : `Dear ${savedBill.customer.name}\nShree Chintamani Electricals\nDate: ${dateStr}\nTotal: Rs. ${savedBill.total.toLocaleString("en-IN")}\n\nPlease Pay using Gpay/Phonepe : \nUPI No: 9527370207 \nThank you....`}
               </pre>
             </div>
           )}
@@ -1150,8 +1150,8 @@ export default function NewBill() {
           </div>
 
           {/* THE MEMO — captured by html2canvas */}
-          <div className="overflow-x-auto pb-2">
-            <div className="min-w-[720px]" ref={memoRef}>
+          <div className="memo-scaler-wrapper w-full overflow-hidden">
+            <div className="memo-scaler" ref={memoRef}>
               <CashMemoTemplate
                 L={L}
                 lang={lang}
@@ -1198,6 +1198,21 @@ export default function NewBill() {
               </button>
             </div>
           )}
+          <style>{`
+        .memo-scaler {
+          width: 720px;
+          transform-origin: top left;
+        }
+        @media (max-width: 1279px) {
+          .memo-scaler { transform: scale(0.72); margin-bottom: -196px; }
+        }
+        @media (max-width: 767px) {
+          .memo-scaler { transform: scale(0.50); margin-bottom: -360px; }
+        }
+        @media (max-width: 430px) {
+          .memo-scaler { transform: scale(0.43); margin-bottom: -410px; }
+        }
+      `}</style>
         </div>
       </div>
     </div>

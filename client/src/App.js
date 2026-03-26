@@ -26,7 +26,7 @@ export default function App() {
           <Route path="/bills" element={<PrivateRoute><AllBills /></PrivateRoute>} />
           <Route path="/customers" element={<PrivateRoute><Customers /></PrivateRoute>} />
           <Route path="/analytics" element={<PrivateRoute><Analytics /></PrivateRoute>} />
-          <Route path="*" element={<Navigate to="/dashboard" />} />
+          <Route path="*" element={<Navigate to="/bills/new" />} />
         </Routes>
       </BrowserRouter>
     </AuthProvider>
