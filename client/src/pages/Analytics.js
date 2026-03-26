@@ -90,7 +90,7 @@ export default function Analytics() {
       </div>
 
       {/* Overall stats */}
-      <div className="grid grid-cols-3 gap-4 mb-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 mb-6">
         <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-xl p-5 text-white shadow-lg">
           <div className="text-3xl mb-1"></div>
           <div className="text-2xl font-black">
@@ -114,17 +114,17 @@ export default function Analytics() {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-6 mb-6">
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 mb-6">
         {/* Calendar */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
-          <div className="flex items-center justify-between mb-4">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 sm:p-5">
+          <div className="flex items-center justify-between mb-4 gap-2">
             <button
               onClick={prevMonth}
               className="w-8 h-8 rounded-lg bg-gray-100 hover:bg-gray-200 transition flex items-center justify-center font-bold text-gray-600"
             >
               ‹
             </button>
-            <h2 className="font-black text-gray-800 text-lg">
+            <h2 className="font-black text-gray-800 text-base sm:text-lg text-center">
               {MONTH_NAMES[month]} {year}
             </h2>
             <button
@@ -135,21 +135,23 @@ export default function Analytics() {
             </button>
           </div>
 
-          {/* Day headers */}
-          <div className="grid grid-cols-7 mb-1">
-            {DAYS.map((d) => (
-              <div
-                key={d}
-                className="text-center text-xs text-gray-400 font-semibold py-1"
-              >
-                {d}
+          <div className="overflow-x-auto">
+            <div className="min-w-[320px]">
+              {/* Day headers */}
+              <div className="grid grid-cols-7 mb-1">
+                {DAYS.map((d) => (
+                  <div
+                    key={d}
+                    className="text-center text-xs text-gray-400 font-semibold py-1"
+                  >
+                    {d}
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
 
-          {/* Calendar grid */}
-          <div className="grid grid-cols-7 gap-0.5">
-            {calCells.map((day, idx) => {
+              {/* Calendar grid */}
+              <div className="grid grid-cols-7 gap-0.5">
+                {calCells.map((day, idx) => {
               if (!day) return <div key={`e${idx}`} />;
               const key = `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
               const bills = billsByDate[key] || [];
@@ -161,46 +163,48 @@ export default function Analytics() {
               const hasBills = bills.length > 0;
               const dayRevenue = bills.reduce((s, b) => s + (b.total || 0), 0);
 
-              return (
-                <div
-                  key={day}
-                  onClick={() => handleDayClick(day)}
-                  className={`
-                    rounded-lg cursor-pointer transition p-1 min-h-[44px] flex flex-col items-center justify-start
-                    ${isSelected ? "bg-primary text-white" : isToday ? "bg-blue-50 border-2 border-primary" : hasBills ? "bg-green-50 hover:bg-green-100" : "hover:bg-gray-50"}
-                  `}
-                >
-                  <span
-                    className={`text-xs font-bold ${isSelected ? "text-white" : isToday ? "text-primary" : "text-gray-700"}`}
-                  >
-                    {day}
-                  </span>
-                  {hasBills && (
+                  return (
                     <div
-                      className={`mt-0.5 text-center ${isSelected ? "text-white" : "text-green-700"}`}
+                      key={day}
+                      onClick={() => handleDayClick(day)}
+                      className={`
+                        rounded-lg cursor-pointer transition p-1 min-h-[44px] flex flex-col items-center justify-start
+                        ${isSelected ? "bg-primary text-white" : isToday ? "bg-blue-50 border-2 border-primary" : hasBills ? "bg-green-50 hover:bg-green-100" : "hover:bg-gray-50"}
+                      `}
                     >
-                      <div
-                        className={`text-xs font-black leading-none ${isSelected ? "text-white" : "text-green-600"}`}
+                      <span
+                        className={`text-xs font-bold ${isSelected ? "text-white" : isToday ? "text-primary" : "text-gray-700"}`}
                       >
-                        {bills.length}
-                      </div>
-                      <div
-                        style={{ fontSize: "8px" }}
-                        className={`${isSelected ? "text-green-100" : "text-green-500"} font-semibold`}
-                      >
-                        ₹
-                        {dayRevenue >= 1000
-                          ? `${(dayRevenue / 1000).toFixed(1)}k`
-                          : dayRevenue}
-                      </div>
+                        {day}
+                      </span>
+                      {hasBills && (
+                        <div
+                          className={`mt-0.5 text-center ${isSelected ? "text-white" : "text-green-700"}`}
+                        >
+                          <div
+                            className={`text-xs font-black leading-none ${isSelected ? "text-white" : "text-green-600"}`}
+                          >
+                            {bills.length}
+                          </div>
+                          <div
+                            style={{ fontSize: "8px" }}
+                            className={`${isSelected ? "text-green-100" : "text-green-500"} font-semibold`}
+                          >
+                            ₹
+                            {dayRevenue >= 1000
+                              ? `${(dayRevenue / 1000).toFixed(1)}k`
+                              : dayRevenue}
+                          </div>
+                        </div>
+                      )}
                     </div>
-                  )}
-                </div>
-              );
-            })}
+                  );
+                })}
+              </div>
+            </div>
           </div>
 
-          <div className="mt-3 flex items-center gap-4 text-xs text-gray-400">
+          <div className="mt-3 flex flex-wrap items-center gap-3 text-xs text-gray-400">
             <span className="flex items-center gap-1">
               <span className="w-3 h-3 rounded bg-green-100 inline-block"></span>{" "}
               Has bills
@@ -217,7 +221,7 @@ export default function Analytics() {
         </div>
 
         {/* Day detail */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 sm:p-5">
           {selectedDay ? (
             <>
               <h3 className="font-black text-gray-800 text-lg mb-1">
@@ -240,16 +244,16 @@ export default function Analytics() {
                       key={bill._id}
                       className="border border-gray-100 rounded-xl p-3 hover:bg-gray-50 transition"
                     >
-                      <div className="flex justify-between items-start">
-                        <div>
+                      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-1">
+                        <div className="min-w-0">
                           <span className="font-black text-primary">
                             Bill No: {bill.billNo}
                           </span>
-                          <span className="text-gray-700 font-semibold ml-2">
+                          <span className="text-gray-700 font-semibold sm:ml-2 block sm:inline">
                             - {bill.customer.name}
                           </span>
                         </div>
-                        <span className="font-black text-gray-800">
+                        <span className="font-black text-gray-800 self-start sm:self-auto">
                           ₹{bill.total?.toLocaleString("en-IN")}
                         </span>
                       </div>
@@ -297,7 +301,7 @@ export default function Analytics() {
           <div className="text-center py-8 text-gray-400">No data yet</div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+            <table className="w-full min-w-[560px] text-sm">
               <thead>
                 <tr className="text-left text-gray-500 border-b text-xs uppercase tracking-wide">
                   <th className="pb-3">Month</th>

@@ -80,10 +80,10 @@ export default function Customers() {
         <p className="text-gray-400 text-sm">{customers.length} customers found</p>
       </div>
 
-      <div className="grid grid-cols-5 gap-5" style={{ height:'calc(100vh - 160px)' }}>
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 lg:gap-5 lg:h-[calc(100vh-160px)]">
 
         {/* LEFT: Customer list */}
-        <div className="col-span-2 bg-white rounded-xl shadow-sm border border-gray-100 flex flex-col overflow-hidden">
+        <div className="lg:col-span-2 bg-white rounded-xl shadow-sm border border-gray-100 flex flex-col overflow-hidden max-h-[45vh] lg:max-h-none">
           <div className="p-4 border-b border-gray-100">
             <input type="text" placeholder="Search by Name or Mobile..."
               value={search} onChange={e => setSearch(e.target.value)}
@@ -115,12 +115,12 @@ export default function Customers() {
         </div>
 
         {/* RIGHT: Customer history */}
-        <div className="col-span-3 bg-white rounded-xl shadow-sm border border-gray-100 flex flex-col overflow-hidden">
+        <div className="lg:col-span-3 bg-white rounded-xl shadow-sm border border-gray-100 flex flex-col overflow-hidden min-h-[50vh] lg:min-h-0">
           {selected ? (
             <>
               {/* Customer header */}
               <div className="p-5 border-b border-gray-100 bg-gray-50">
-                <div className="flex items-start justify-between">
+                <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
                   <div className="flex items-center gap-4">
                     <div className="w-14 h-14 rounded-full bg-primary flex items-center justify-center text-white font-black text-xl">
                       {selected.name.charAt(0).toUpperCase()}
@@ -132,13 +132,13 @@ export default function Customers() {
                     </div>
                   </div>
                   <button onClick={() => handleDeleteCustomer(selected._id)}
-                    className="bg-red-100 text-red-600 px-3 py-1.5 rounded-lg text-xs font-semibold hover:bg-red-200 transition">
+                    className="bg-red-100 text-red-600 px-3 py-1.5 rounded-lg text-xs font-semibold hover:bg-red-200 transition self-start sm:self-auto">
                     Delete Customer
                   </button>
                 </div>
 
                 {/* Stats */}
-                <div className="grid grid-cols-3 gap-3 mt-4">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-4">
                   <div className="bg-white rounded-xl p-3 border border-gray-100 text-center">
                     <p className="text-2xl font-black text-primary">{history.length}</p>
                     <p className="text-xs text-gray-500 mt-0.5">Total Bills</p>
@@ -167,7 +167,7 @@ export default function Customers() {
                       const ws = warrantyStatus(bill.warrantyExpiry);
                       return (
                         <div key={bill._id} className={`border rounded-xl p-4 ${ws.bg} transition`}>
-                          <div className="flex items-start justify-between mb-3">
+                          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 mb-3">
                             <div>
                               <div className="flex items-center gap-2">
                                 <span className="font-black text-primary text-xl">#{bill.billNo}</span>
@@ -182,7 +182,7 @@ export default function Customers() {
                                 Warranty expires: {new Date(bill.warrantyExpiry).toLocaleDateString('en-IN', { day:'2-digit', month:'short', year:'numeric' })}
                               </p>
                             </div>
-                            <div className="text-right">
+                            <div className="text-left sm:text-right">
                               <p className="font-black text-xl text-gray-800">₹{bill.total?.toLocaleString('en-IN')}</p>
                               <p className="text-xs text-gray-400">{bill.items?.length} items</p>
                             </div>
@@ -199,16 +199,16 @@ export default function Customers() {
                           </div>
 
                           {/* Actions */}
-                          <div className="flex gap-2">
+                          <div className="flex flex-col sm:flex-row gap-2">
                             <button onClick={() => {
                               const dateStr = new Date(bill.date).toLocaleDateString('en-IN', { day:'2-digit', month:'2-digit', year:'numeric' });
                               const msg = `Dear ${selected.name},\n\nShree Chintamani Electricals\nDate: ${dateStr}\nTotal: Rs. ${bill.total?.toLocaleString('en-IN')}\n\n01 year Warranty & Rs.800 Replacement Charges\nPlease Pay using Gpay/Phnepay : \nUPI No: 9527370207\nThank you....`;
                               window.open(`https://wa.me/91${selected.mobile}?text=${encodeURIComponent(msg)}`);
-                            }} className="flex-1 bg-green-500 text-white py-1.5 rounded-lg text-xs font-semibold hover:bg-green-600 transition text-center">
+                            }} className="flex-1 bg-green-500 text-white py-2 rounded-lg text-xs font-semibold hover:bg-green-600 transition text-center">
                               WhatsApp
                             </button>
                             <button onClick={() => handleDeleteBill(bill._id)}
-                              className="bg-red-100 text-red-600 px-3 py-1.5 rounded-lg text-xs font-semibold hover:bg-red-200 transition">
+                              className="bg-red-100 text-red-600 px-3 py-2 rounded-lg text-xs font-semibold hover:bg-red-200 transition">
                               Delete Bill
                             </button>
                           </div>

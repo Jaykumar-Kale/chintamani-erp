@@ -44,7 +44,7 @@ export default function Dashboard() {
   return (
     <div>
       {/* HEADER */}
-      <div className="mb-6 flex justify-between items-center">
+      <div className="mb-6 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
         <div>
           <h1 className="text-2xl font-bold text-gray-800">Dashboard</h1>
           <p className="text-gray-400 text-sm">
@@ -58,7 +58,7 @@ export default function Dashboard() {
 
         <button
           onClick={() => navigate("/bills/new")}
-          className="bg-primary text-white px-4 py-2 rounded-lg shadow hover:bg-blue-700 transition text-sm font-semibold"
+          className="w-full sm:w-auto bg-primary text-white px-4 py-2 rounded-lg shadow hover:bg-blue-700 transition text-sm font-semibold"
         >
           New Bill
         </button>
@@ -108,17 +108,17 @@ export default function Dashboard() {
               onClick={() => setSelectedBill(bill)} // 🔥 CLICK
               className="border border-gray-100 rounded-xl p-4 hover:bg-gray-50 transition cursor-pointer"
             >
-              <div className="flex justify-between">
-                <div>
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1">
+                <div className="min-w-0">
                   <span className="font-black text-primary">
                     Bill No : {bill.billNo} 
                   </span>
-                  <span className="ml-2 font-semibold text-gray-700">
+                  <span className="sm:ml-2 font-semibold text-gray-700 block sm:inline truncate">
                     {bill.customer.name}
                   </span>
                 </div>
 
-                <span className="font-bold">
+                <span className="font-bold self-start sm:self-auto">
                   ₹{bill.total?.toLocaleString('en-IN')}
                 </span>
               </div>
@@ -129,8 +129,8 @@ export default function Dashboard() {
 
       {/* 🔥 BILL MODAL */}
       {selectedBill && (
-        <div className="fixed inset-0 bg-black/40 flex justify-center items-center z-50">
-          <div className="bg-white w-[90%] max-w-lg rounded-xl p-6 shadow-lg">
+        <div className="fixed inset-0 bg-black/40 flex justify-center items-center z-50 p-4">
+          <div className="bg-white w-full max-w-lg rounded-xl p-4 sm:p-6 shadow-lg max-h-[90vh] overflow-y-auto">
             <h2 className="text-lg font-bold mb-4">
               Bill #{selectedBill.billNo}
             </h2>

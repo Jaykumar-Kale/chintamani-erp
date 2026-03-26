@@ -864,23 +864,9 @@ export default function NewBill() {
       </div>
 
       {/* TWO COLUMN LAYOUT */}
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "1fr 1fr",
-          gap: "24px",
-          alignItems: "start",
-        }}
-      >
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 xl:gap-6 items-start">
         {/* LEFT — scrollable form */}
-        <div
-          className="space-y-4"
-          style={{
-            overflowY: "auto",
-            maxHeight: "calc(100vh - 140px)",
-            paddingRight: "4px",
-          }}
-        >
+        <div className="space-y-4 xl:overflow-y-auto xl:max-h-[calc(100vh-140px)] xl:pr-1">
           {/* Customer */}
           <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
             <h2 className="font-bold text-gray-700 mb-3 flex items-center gap-2">
@@ -981,7 +967,7 @@ export default function NewBill() {
                         placeholder="Description"
                         className="w-full border border-blue-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary bg-white"
                       />
-                      <div className="grid grid-cols-2 gap-2">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                         <div>
                           <label className="text-xs text-gray-400 mb-0.5 block">
                             Qty {item.unit ? `(${item.unit})` : ""}
@@ -1041,7 +1027,7 @@ export default function NewBill() {
                     </button>
                   )}
                 </div>
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                   <div>
                     <label className="text-xs text-gray-400 mb-0.5 block">
                       Qty
@@ -1154,7 +1140,7 @@ export default function NewBill() {
         </div>
 
         {/* RIGHT — sticky preview */}
-        <div style={{ position: "sticky", top: "80px" }}>
+        <div className="xl:sticky xl:top-20">
           <div className="flex items-center justify-between mb-3">
             <p className="text-sm font-semibold text-gray-500 uppercase tracking-wide">
               Live Preview Of Cash Memo:
@@ -1167,19 +1153,21 @@ export default function NewBill() {
           </div>
 
           {/* THE MEMO — captured by html2canvas */}
-          <div ref={memoRef}>
-            <CashMemoTemplate
-              L={L}
-              lang={lang}
-              displayCust={displayCust}
-              displayBillNo={displayBillNo}
-              dateStr={dateStr}
-              allBillItems={previewItems}
-              displayTotal={previewTotal}
-              signImg={signImg}
-              motorLeft={motorLeft}
-              motorRight={motorRight}
-            />
+          <div className="overflow-x-auto pb-2">
+            <div className="min-w-[720px]" ref={memoRef}>
+              <CashMemoTemplate
+                L={L}
+                lang={lang}
+                displayCust={displayCust}
+                displayBillNo={displayBillNo}
+                dateStr={dateStr}
+                allBillItems={previewItems}
+                displayTotal={previewTotal}
+                signImg={signImg}
+                motorLeft={motorLeft}
+                motorRight={motorRight}
+              />
+            </div>
           </div>
 
           {!savedBill ? (
@@ -1191,7 +1179,7 @@ export default function NewBill() {
               {loading ? "Saving..." : "Save & Generate Bill"}
             </button>
           ) : (
-            <div className="mt-3 grid grid-cols-3 gap-2">
+            <div className="mt-3 grid grid-cols-1 sm:grid-cols-3 gap-2">
               <button
                 onClick={handleWhatsApp}
                 className="bg-green-500 text-white py-2.5 rounded-xl font-bold hover:bg-green-600 transition text-xs shadow"

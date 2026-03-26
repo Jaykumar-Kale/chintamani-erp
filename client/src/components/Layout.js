@@ -33,7 +33,7 @@ export default function Layout({ children }) {
 
   return (
     <div className="flex min-h-screen bg-slate-100">
-      <header className="fixed top-0 left-0 right-0 h-16 bg-primary text-white flex items-center justify-between px-4 z-20 shadow lg:hidden">
+      <header className="fixed top-0 left-0 right-0 h-16 bg-primary text-white flex items-center justify-between gap-2 px-3 z-20 shadow lg:hidden">
         <button
           onClick={() => setIsMenuOpen(true)}
           className="text-2xl leading-none"
@@ -41,8 +41,8 @@ export default function Layout({ children }) {
         >
           ☰
         </button>
-        <h1 className="text-base font-bold">Shree Chintamani Electricals</h1>
-        <button onClick={handleLogout} className="text-xs text-blue-100">
+        <h1 className="text-sm font-bold truncate flex-1 text-center">Shree Chintamani Electricals</h1>
+        <button onClick={handleLogout} className="text-[11px] text-blue-100 whitespace-nowrap">
           Logout
         </button>
       </header>
@@ -105,7 +105,7 @@ export default function Layout({ children }) {
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 p-4 pt-20 min-h-screen lg:ml-64 lg:p-6 lg:pt-6">
+      <main className="flex-1 p-3 pt-20 min-h-screen lg:ml-64 lg:p-6 lg:pt-6">
         {children}
       </main>
     </div>
