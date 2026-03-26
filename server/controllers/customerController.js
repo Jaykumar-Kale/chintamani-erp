@@ -43,3 +43,21 @@ exports.getCustomerHistory = async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 };
+
+// Delete customer and all their bills
+exports.deleteCustomer = async (req, res) => {
+  try {
+    const customer = await Customer.findById(req.params.id);
+    if (!customer) return res.status(404).json({ message: 'Customer not found' });
+
+    // Delete all bills associated with this customer
+    await Bill.deleteMany({ 'customer.mobile': customer.mobile });
+
+    // Delete the customer
+    await Customer.findByIdAndDelete(req.params.id);
+
+    res.json({ success: true, message: 'Customer and all their bills deleted' });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};

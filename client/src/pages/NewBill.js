@@ -622,7 +622,7 @@ function CashMemoTemplate({
 }
 
 export default function NewBill() {
-  const [lang, setLang] = useState("mr");
+  const [lang, setLang] = useState("en");
   const [customer, setCustomer] = useState({
     name: "",
     mobile: "",

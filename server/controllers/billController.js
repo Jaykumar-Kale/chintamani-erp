@@ -21,6 +21,7 @@ exports.createBill = async (req, res) => {
       notes = '',
       costPrice = 0,
       date,
+      language = 'en',
     } = req.body;
 
     if (!customer || !customer.name || !customer.mobile) {
@@ -48,7 +49,7 @@ exports.createBill = async (req, res) => {
     const total = normalizedItems.reduce((sum, item) => sum + item.amount, 0);
     const billNo = await getNextBillNo();
     const billDate = date ? new Date(date) : new Date();
-    const warrantyMonths = 18;
+    const warrantyMonths = 12;
     const warrantyExpiry = addMonths(billDate, warrantyMonths);
     const finalCostPrice = Number(costPrice || 0);
     const profit = total - finalCostPrice;
@@ -68,6 +69,7 @@ exports.createBill = async (req, res) => {
       profit,
       warrantyMonths,
       warrantyExpiry,
+      language,
       replacementCharges: 800,
     });
 
