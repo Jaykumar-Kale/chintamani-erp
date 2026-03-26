@@ -1,9 +1,16 @@
 import { useEffect, useState } from 'react';
 import api from '../utils/api';
+import { useAuth } from "../context/AuthContext";
+import { useNavigate } from "react-router-dom";
 
 export default function Dashboard() {
   const [stats, setStats] = useState(null);
   const [recentBills, setRecentBills] = useState([]);
+  const [monthly, setMonthly] = useState([]);
+  const [selectedBill, setSelectedBill] = useState(null); // 🔥 NEW
+
+  const { user } = useAuth();
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -12,7 +19,9 @@ export default function Dashboard() {
           api.get('/bills/analytics'),
           api.get('/bills?limit=5'),
         ]);
+
         setStats(analyticsRes.data.overall);
+        setMonthly(analyticsRes.data.monthly || []);
         setRecentBills(billsRes.data.bills);
       } catch (err) {
         console.error(err);
@@ -21,70 +30,138 @@ export default function Dashboard() {
     fetchData();
   }, []);
 
-  const cards = [
-    { label: 'Total Bills', value: stats?.totalBills || 0, icon: '🧾', color: 'bg-blue-50 border-blue-200' },
-    { label: 'Total Revenue', value: `₹${(stats?.totalRevenue || 0).toLocaleString()}`, icon: '💰', color: 'bg-green-50 border-green-200' },
-    { label: 'Total Profit', value: `₹${(stats?.totalProfit || 0).toLocaleString()}`, icon: '📈', color: 'bg-purple-50 border-purple-200' },
-  ];
+  const now = new Date();
+  const currentMonth = now.getMonth() + 1;
+  const currentYear = now.getFullYear();
+
+  const currentMonthData = monthly.find(
+    (m) => m._id.month === currentMonth && m._id.year === currentYear
+  );
+
+  const currentMonthProfit = currentMonthData?.totalProfit || 0;
+  const totalProfitTillDate = stats?.totalProfit || 0;
 
   return (
     <div>
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-800">Dashboard</h1>
-        <p className="text-gray-500 text-sm">Welcome back, Sagar 👋</p>
+      {/* HEADER */}
+      <div className="mb-6 flex justify-between items-center">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-800">Dashboard</h1>
+          <p className="text-gray-400 text-sm">
+            Welcome back{" "}
+            <span className="font-semibold text-gray-700">
+              {user?.name || "User"}
+            </span>{" "}
+            👋
+          </p>
+        </div>
+
+        <button
+          onClick={() => navigate("/bills/new")}
+          className="bg-primary text-white px-4 py-2 rounded-lg shadow hover:bg-blue-700 transition text-sm font-semibold"
+        >
+          New Bill
+        </button>
       </div>
 
-      {/* Stat Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 mb-8">
-        {cards.map((card) => (
-          <div key={card.label} className={`${card.color} border rounded-xl p-5`}>
-            <div className="text-3xl mb-2">{card.icon}</div>
-            <div className="text-2xl font-bold text-gray-800">{card.value}</div>
-            <div className="text-sm text-gray-500 mt-1">{card.label}</div>
+      {/* STATS */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
+        <div className="bg-gradient-to-br from-blue-500 to-primary rounded-xl p-5 text-white shadow-lg">
+          <div className="text-2xl font-black">{stats?.totalBills || 0}</div>
+          <div className="text-blue-100 text-sm">Total Bills</div>
+        </div>
+
+        <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-xl p-5 text-white shadow-lg">
+          <div className="text-2xl font-black">
+            ₹{(stats?.totalRevenue || 0).toLocaleString('en-IN')}
           </div>
-        ))}
+          <div className="text-green-100 text-sm">Total Revenue</div>
+        </div>
+
+        <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl p-5 text-white shadow-lg">
+          <div className="text-2xl font-black">
+            ₹{currentMonthProfit.toLocaleString('en-IN')}
+          </div>
+          <div className="text-purple-100 text-sm">
+            {now.toLocaleString('default', { month: 'long' })} Profit
+          </div>
+        </div>
+
+        <div className="bg-gradient-to-br from-orange-500 to-red-500 rounded-xl p-5 text-white shadow-lg">
+          <div className="text-2xl font-black">
+            ₹{totalProfitTillDate.toLocaleString('en-IN')}
+          </div>
+          <div className="text-orange-100 text-sm">Total Profit Till Date</div>
+        </div>
       </div>
 
-      {/* Recent Bills */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 md:p-6">
-        <h2 className="text-lg font-bold text-gray-800 mb-4">Recent Bills</h2>
-        {recentBills.length === 0 ? (
-          <p className="text-gray-400 text-sm">No bills yet. Create your first bill!</p>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[640px] text-sm">
-              <thead>
-                <tr className="text-left text-gray-500 border-b">
-                  <th className="pb-2">Bill No.</th>
-                  <th className="pb-2">Customer</th>
-                  <th className="pb-2">Date</th>
-                  <th className="pb-2">Total</th>
-                  <th className="pb-2">Warranty</th>
-                </tr>
-              </thead>
-              <tbody>
-                {recentBills.map((bill) => (
-                  <tr key={bill._id} className="border-b last:border-0 hover:bg-gray-50">
-                    <td className="py-3 font-bold text-primary">#{bill.billNo}</td>
-                    <td className="py-3">{bill.customer.name}</td>
-                    <td className="py-3">{new Date(bill.date).toLocaleDateString('en-IN')}</td>
-                    <td className="py-3 font-semibold">₹{bill.total.toLocaleString()}</td>
-                    <td className="py-3">
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                        new Date(bill.warrantyExpiry) > new Date()
-                          ? 'bg-green-100 text-green-700'
-                          : 'bg-red-100 text-red-700'
-                      }`}>
-                        {new Date(bill.warrantyExpiry) > new Date() ? '✅ Active' : '❌ Expired'}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
+      {/* RECENT BILLS */}
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
+        <h2 className="text-lg font-bold text-gray-800 mb-4">
+          Recent 5 Bills :
+        </h2>
+
+        <div className="space-y-3">
+          {recentBills.map((bill) => (
+            <div
+              key={bill._id}
+              onClick={() => setSelectedBill(bill)} // 🔥 CLICK
+              className="border border-gray-100 rounded-xl p-4 hover:bg-gray-50 transition cursor-pointer"
+            >
+              <div className="flex justify-between">
+                <div>
+                  <span className="font-black text-primary">
+                    Bill No : {bill.billNo} 
+                  </span>
+                  <span className="ml-2 font-semibold text-gray-700">
+                    {bill.customer.name}
+                  </span>
+                </div>
+
+                <span className="font-bold">
+                  ₹{bill.total?.toLocaleString('en-IN')}
+                </span>
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
+
+      {/* 🔥 BILL MODAL */}
+      {selectedBill && (
+        <div className="fixed inset-0 bg-black/40 flex justify-center items-center z-50">
+          <div className="bg-white w-[90%] max-w-lg rounded-xl p-6 shadow-lg">
+            <h2 className="text-lg font-bold mb-4">
+              Bill #{selectedBill.billNo}
+            </h2>
+
+            <p><b>Customer:</b> {selectedBill.customer.name}</p>
+            <p><b>Mobile:</b> {selectedBill.customer.mobile}</p>
+            <p><b>Date:</b> {new Date(selectedBill.date).toLocaleDateString('en-IN')}</p>
+
+            <div className="mt-3">
+              <h3 className="font-semibold mb-2">Items:</h3>
+              {selectedBill.items.map((item, i) => (
+                <div key={i} className="text-sm flex justify-between">
+                  <span>{item.description}</span>
+                  <span>₹{item.amount}</span>
+                </div>
+              ))}
+            </div>
+
+            <div className="mt-4 font-bold text-right">
+              Total: ₹{selectedBill.total}
+            </div>
+
+            <button
+              onClick={() => setSelectedBill(null)}
+              className="mt-4 w-full bg-primary text-white py-2 rounded-lg"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

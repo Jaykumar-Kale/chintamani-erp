@@ -28,9 +28,9 @@ export default function Login() {
     <div className="min-h-screen bg-gradient-to-br from-primary to-blue-900 flex items-center justify-center p-4">
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
         <div className="bg-primary p-8 text-center">
-          <div className="text-5xl mb-3">⚡</div>
-          <h1 className="text-white text-2xl font-bold">श्री चिंतामणी</h1>
-          <p className="text-blue-200 text-sm mt-1">Electricals & Motor Winding</p>
+          <div className="text-5xl mb-3"></div>
+          <h1 className="text-white text-2xl font-bold">Shree Chintamani Electricals</h1>
+          <p className="text-blue-200 text-sm mt-1">|| श्री चिंतामणी प्रसन्न ||</p>
         </div>
         <div className="p-8">
           <h2 className="text-gray-800 text-xl font-bold mb-6 text-center">Login to ERP</h2>
@@ -43,7 +43,7 @@ export default function Login() {
                 value={form.email}
                 onChange={(e) => setForm({ ...form, email: e.target.value })}
                 className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary text-sm"
-                placeholder="sagar@chintamani.com"
+                placeholder="sagarkale0207@gmail.com"
               />
             </div>
             <div>
