@@ -643,7 +643,6 @@ export default function NewBill() {
     month: "2-digit",
     year: "numeric",
   });
-  const displayTotal = savedBill ? savedBill.total : 0;
   const displayBillNo = savedBill ? savedBill.billNo : null;
   const displayCust = savedBill ? savedBill.customer : customer;
 
@@ -778,9 +777,7 @@ export default function NewBill() {
 
   const handleWhatsApp = () => {
     if (!savedBill) return;
-    const { name, mobile } = savedBill.customer;
-    const amt = savedBill.total.toLocaleString("en-IN");
-    const billNo = savedBill.billNo;
+    const { mobile } = savedBill.customer;
     const msg =
       lang === "mr"
         ? `नमस्कार ${savedBill.customer.name}\n\nश्री चिंतामणी इलेक्ट्रिकल्स\nदिनांक: ${dateStr}\nएकूण: रु. ${savedBill.total.toLocaleString("en-IN")}\nकृपया GPay / PhonePe वापरून पैसे द्या : \nUPI No: 9527370207 (Sagar Kale)\nधन्यवाद....`
