@@ -1,14 +1,18 @@
-import { useEffect, useState } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
-import toast from 'react-hot-toast';
+import { useEffect, useState } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
+import toast from "react-hot-toast";
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'; 
+
+// <!-- Icons are represented as emojis for simplicity. In a real application, you might want to use an icon library like FontAwesome or Material Icons. -->
+// Icons = 📊 ,➕ ,  🧾, 👥, 📈
 
 const navItems = [
-  { path: '/dashboard', label: 'Dashboard', icon: '📊' },
-  { path: '/bills/new', label: 'New Bill', icon: '➕' },
-  { path: '/bills', label: 'All Bills', icon: '🧾' },
-  { path: '/customers', label: 'Customers', icon: '👥' },
-  { path: '/analytics', label: 'Analytics', icon: '📈' },
+  { path: "/dashboard", label: "Dashboard", icon: "" },
+  { path: "/bills/new", label: "New Bill", icon: "" },
+  { path: "/bills", label: "All Bills", icon: "" },
+  { path: "/customers", label: "Customers", icon: "" },
+  { path: "/analytics", label: "Analytics", icon: "" },
 ];
 
 export default function Layout({ children }) {
@@ -23,8 +27,8 @@ export default function Layout({ children }) {
 
   const handleLogout = () => {
     logout();
-    toast.success('Logged out');
-    navigate('/login');
+    toast.success("Logged out");
+    navigate("/login");
   };
 
   return (
@@ -37,11 +41,8 @@ export default function Layout({ children }) {
         >
           ☰
         </button>
-        <h1 className="text-base font-bold">श्री चिंतामणी ERP</h1>
-        <button
-          onClick={handleLogout}
-          className="text-xs text-blue-100"
-        >
+        <h1 className="text-base font-bold">Shree Chintamani Electricals</h1>
+        <button onClick={handleLogout} className="text-xs text-blue-100">
           Logout
         </button>
       </header>
@@ -55,10 +56,12 @@ export default function Layout({ children }) {
       )}
 
       {/* Sidebar */}
-      <aside className={`w-64 bg-primary text-white flex flex-col fixed h-full z-30 shadow-xl transition-transform duration-200 ${isMenuOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0`}>
+      <aside
+        className={`w-64 bg-primary text-white flex flex-col fixed h-full z-30 shadow-xl transition-transform duration-200 ${isMenuOpen ? "translate-x-0" : "-translate-x-full"} lg:translate-x-0`}
+      >
         <div className="p-6 border-b border-blue-700">
           <div className="flex items-center justify-between">
-            <h1 className="text-xl font-bold">श्री चिंतामणी</h1>
+            <h1 className="text-xl font-bold">Shree Chintamani Electricals</h1>
             <button
               onClick={() => setIsMenuOpen(false)}
               className="lg:hidden text-blue-200 text-xl leading-none"
@@ -67,7 +70,7 @@ export default function Layout({ children }) {
               ×
             </button>
           </div>
-          <p className="text-blue-300 text-xs mt-1">Electricals ERP System</p>
+          <p className="text-blue-300 text-xs mt-1">|| श्री चिंतामणी प्रसन्न ||</p>
         </div>
 
         <nav className="flex-1 p-4 space-y-1">
@@ -78,8 +81,8 @@ export default function Layout({ children }) {
               onClick={() => setIsMenuOpen(false)}
               className={`flex items-center gap-3 px-4 py-3 rounded-lg transition text-sm font-medium ${
                 pathname === item.path
-                  ? 'bg-white text-primary font-bold'
-                  : 'text-blue-100 hover:bg-blue-700'
+                  ? "bg-white text-primary font-bold"
+                  : "text-blue-100 hover:bg-blue-700"
               }`}
             >
               <span>{item.icon}</span>
@@ -95,7 +98,8 @@ export default function Layout({ children }) {
             onClick={handleLogout}
             className="mt-3 w-full text-left text-xs text-blue-300 hover:text-white transition"
           >
-            🚪 Logout
+            <FontAwesomeIcon icon="fa-solid fa-right-from-bracket" />
+            Logout
           </button>
         </div>
       </aside>

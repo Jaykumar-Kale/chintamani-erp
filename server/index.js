@@ -19,9 +19,9 @@ app.get('/', (req, res) => {
 
 mongoose.connect(process.env.MONGO_URI)
   .then(() => {
-    console.log('✅ MongoDB Connected');
+    console.log('MongoDB Connected successfully!!!!');
     app.listen(process.env.PORT || 5000, () => {
-      console.log(`✅ Server running on port ${process.env.PORT || 5000}`);
+      console.log(`Server running on port ${process.env.PORT || 5000} succcessfully!!!!`);
     });
   })
   .catch((err) => console.log('❌ DB Error:', err));
